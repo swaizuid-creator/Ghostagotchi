@@ -22,9 +22,9 @@ const el = {
   muteBtn: document.getElementById('muteBtn')
 };
 
-// ---- AUDIO ----
+// --- AUDIO ---
 let sfxMuted = false;
-let lastLowHealthAt = 0; // rate-limit voor lowhealth sfx
+let lastLowHealthAt = 0; // rate-limit voor lowhealth
 
 function playSfx(file){
   if (sfxMuted) return;
@@ -38,7 +38,7 @@ el.muteBtn.addEventListener('click', () => {
   el.muteBtn.textContent = sfxMuted ? '🔊 Geluid aan' : '🔇 Geluid uit';
 });
 
-// ---- VISUALS ----
+// --- VISUAL HELPERS ---
 function setGhostImg(file){ el.ghostSprite.src = 'assets/' + file; }
 
 function maybePlayLowHealth(){
@@ -49,9 +49,9 @@ function maybePlayLowHealth(){
   }
 }
 
-// ---- STATE UPDATES ----
+// --- SOCKET STATE ---
 socket.on('state', (s)=>{
-  // Stats en mood
+  // Pet stats
   const p = s.pet;
   el.name.textContent = p.name;
   el.mood.textContent = p.mood;
@@ -60,7 +60,7 @@ socket.on('state', (s)=>{
   el.happiness.value = p.happiness;
   el.lastAction.textContent = s.lastAction;
 
-  // Attention-icoon + lowhealth sfx
+  // Attention
   if (p.attention) {
     el.attentionIcon.hidden = false;
     maybePlayLowHealth();
@@ -68,7 +68,7 @@ socket.on('state', (s)=>{
     el.attentionIcon.hidden = true;
   }
 
-  // Actie → afbeelding + sfx
+  // Actie → sprite + sfx
   const a = s.lastAction || '';
   if (a.includes('AI: feed')) {
     setGhostImg('ghost_feed.png');
@@ -83,12 +83,11 @@ socket.on('state', (s)=>{
     setGhostImg('ghost_trick.png');
     playSfx('trick_spooky.wav');
   } else if (a.includes('survival ✅')) {
-    // laat een vrolijke pose zien (play of idle) en success sfx
     setGhostImg('ghost_play.png');
-    playSfx('play_chime.wav'); // alternatief: aparte success-sfx
+    playSfx('play_chime.wav');
   } else if (a.includes('survival ❌')) {
     setGhostImg('ghost_trick.png');
-    playSfx('error_sad.wav');  // + eventueel lowhealth extra, maar niet dubbel
+    playSfx('error_sad.wav');
   } else {
     setGhostImg('ghost_idle.png');
   }
