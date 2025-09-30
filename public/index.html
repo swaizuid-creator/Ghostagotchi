@@ -11,15 +11,21 @@
   <div class="wrap">
     <header class="topbar">
       <h1>👻 Ghostagotchi – AI Survival</h1>
-      <button id="muteBtn" class="mute">🔇 Geluid uit</button>
+      <div class="controls">
+        <button id="muteBtn" class="mute">🔇 Geluid uit</button>
+        <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/>
+      </div>
     </header>
+
     <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via volume.</p>
 
+    <!-- PET PANEL -->
     <section class="card pet">
       <div class="pet-visual">
         <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi"/>
         <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
       </div>
+
       <div class="stats">
         <div>Naam: <strong id="name">Ghostagotchi</strong></div>
         <div>Stemming: <strong id="mood">cheerful</strong></div>
@@ -32,24 +38,55 @@
       </div>
     </section>
 
+    <!-- SURVIVAL PANEL -->
     <section class="card">
       <h2>🫀 Survival-meter (per uur)</h2>
       <p>Doel: <strong id="goalUsd">$0</strong> &nbsp;|&nbsp; Laatste uur: <strong id="lastUsd">$0</strong></p>
+
       <div class="progress-wrap">
-        <div class="progress-bar"><div id="progressFill"></div></div>
+        <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
         <div class="progress-label" id="progressLabel">0%</div>
       </div>
-      <p>Status: <strong id="survStatus">—</strong> | Streak: <strong id="streak">0</strong> | Volgende check: <strong id="countdown">--:--</strong></p>
+
+      <p>
+        Status: <strong id="survStatus">—</strong> |
+        Streak: <strong id="streak">0</strong> |
+        Volgende check: <strong id="countdown">--:--</strong>
+      </p>
+      <p>Hype-meter: <strong id="hype">–</strong></p>
+
       <small>Zonder DEX-pair draait demo-volume (voor test).</small>
     </section>
 
+    <!-- CTA + QR -->
+    <section class="card cta">
+      <div class="cta-row">
+        <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost</a>
+        <button id="copyLink" class="ghost-btn">Kopieer link</button>
+        <button id="toggleQR" class="ghost-btn">QR tonen</button>
+      </div>
+      <div id="qrBox" class="qr" hidden>
+        <img id="qrImg" alt="QR naar trade link">
+      </div>
+    </section>
+
+    <!-- AUTO CALLOUT BIJ LAAG PROGRESS -->
+    <div id="callout" class="card callout" hidden>
+      <strong>👻 Ghost is hungry!</strong> We zitten onder 50%.
+      <a class="cta-btn inline" id="calloutTrade" href="#" target="_blank" rel="noopener">Feed now</a>
+    </div>
+
+    <!-- LOG -->
     <section class="card log">
       <h2>📜 Log</h2>
       <ul id="logList"></ul>
     </section>
 
-    <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
+    <footer><small>Entertainmentproject; geen financiële beloftes. © Ghostagotchi</small></footer>
   </div>
+
+  <!-- Confetti layer -->
+  <div id="confettiLayer"></div>
 
   <script src="client.js"></script>
 </body>
