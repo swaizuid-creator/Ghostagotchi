@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ghostagotchi
+    env: node
+    plan: free
+    region: frankfurt
+    autoDeploy: true
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    healthCheckPath: "/"
+    envVars:
+      - key: HOURLY_USD_GOAL
+        value: "200"
+      - key: CHECK_MINUTES
+        value: "60"
+      - key: DEX_PAIR_URL
+        sync: false   # vul later in via Render → Environment

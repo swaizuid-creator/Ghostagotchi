@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ghostagotchi – AI Survival</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <h1>👻 Ghostagotchi – AI Survival</h1>
+      <div class="controls">
+        <button id="muteBtn" class="mute">🔇 Geluid uit</button>
+      </div>
+    </header>
+    <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via volume.</p>
+
+    <section class="card pet">
+      <div class="pet-visual">
+        <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi"/>
+        <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
+      </div>
+      <div class="stats">
+        <div>Naam: <strong id="name">Ghostagotchi</strong></div>
+        <div>Stemming: <strong id="mood">cheerful</strong></div>
+        <div class="bars">
+          <label>Honger</label><progress id="hunger" max="100" value="25"></progress>
+          <label>Energie</label><progress id="energy" max="100" value="80"></progress>
+          <label>Blijdschap</label><progress id="happiness" max="100" value="70"></progress>
+        </div>
+        <div class="last">Laatste actie: <span id="lastAction">—</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🫀 Survival-meter (per uur)</h2>
+      <p>Doel: <strong id="goalUsd">$0</strong> &nbsp;|&nbsp; Laatste uur: <strong id="lastUsd">$0</strong></p>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">0%</div>
+      </div>
+      <p>Status: <strong id="survStatus">—</strong> | Streak: <strong id="streak">0</strong> | Volgende check: <strong id="countdown">--:--</strong></p>
+      <small>Zonder DEX-pair draait demo-volume (voor test).</small>
+    </section>
+
+    <section class="card log">
+      <h2>📜 Log</h2>
+      <ul id="logList"></ul>
+    </section>
+
+    <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>
