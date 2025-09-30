@@ -9,6 +9,8 @@
 </head>
 <body>
   <div class="wrap">
+
+    <!-- HEADER -->
     <header class="topbar">
       <h1>👻 Ghostagotchi – AI Survival</h1>
       <div class="controls">
@@ -16,8 +18,7 @@
         <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/>
       </div>
     </header>
-
-    <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via volume.</p>
+    <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via volume (SOL).</p>
 
     <!-- PET PANEL -->
     <section class="card pet">
@@ -28,7 +29,10 @@
 
       <div class="stats">
         <div>Naam: <strong id="name">Ghostagotchi</strong></div>
-        <div>Stemming: <strong id="mood">cheerful</strong></div>
+        <div>Stemming:
+          <strong id="mood">cheerful</strong>
+          <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span>
+        </div>
         <div class="bars">
           <label>Honger</label><progress id="hunger" max="100" value="25"></progress>
           <label>Energie</label><progress id="energy" max="100" value="80"></progress>
@@ -41,7 +45,7 @@
     <!-- SURVIVAL PANEL -->
     <section class="card">
       <h2>🫀 Survival-meter (per uur)</h2>
-      <p>Doel: <strong id="goalUsd">$0</strong> &nbsp;|&nbsp; Laatste uur: <strong id="lastUsd">$0</strong></p>
+      <p>Doel: <strong id="goalUsd">◎0.000</strong> &nbsp;|&nbsp; Laatste uur: <strong id="lastUsd">◎0.000</strong></p>
 
       <div class="progress-wrap">
         <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
@@ -53,7 +57,14 @@
         Streak: <strong id="streak">0</strong> |
         Volgende check: <strong id="countdown">--:--</strong>
       </p>
+
       <p>Hype-meter: <strong id="hype">–</strong></p>
+
+      <!-- NIEUW: Next goal preview -->
+      <p class="sub">
+        Volgend doel bij ✅: <strong id="nextPass">◎0.000</strong> &nbsp;|&nbsp;
+        bij ❌: <strong id="nextFail">◎0.000</strong>
+      </p>
 
       <small>Zonder DEX-pair draait demo-volume (voor test).</small>
     </section>
@@ -82,11 +93,13 @@
       <ul id="logList"></ul>
     </section>
 
-    <footer><small>Entertainmentproject; geen financiële beloftes. © Ghostagotchi</small></footer>
+    <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
   </div>
 
-  <!-- Confetti layer -->
+  <!-- Overlays -->
   <div id="confettiLayer"></div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <div id="chatBubble" class="bubble" hidden></div>
 
   <script src="client.js"></script>
 </body>
