@@ -5,6 +5,7 @@ const TRADE_URL = 'https://pump.fun/<JOUW_TOKEN_OF_LINK>';
 /* ======================================== */
 
 const el = {
+  // Hero & stats
   name: document.getElementById('name'),
   mood: document.getElementById('mood'),
   moodEmoji: document.getElementById('moodEmoji'),
@@ -15,11 +16,11 @@ const el = {
   ghostSprite: document.getElementById('ghostSprite'),
   attentionIcon: document.getElementById('attentionIcon'),
 
-  goal: document.getElementById('goalUsd'),      // hergebruikt id, nu SOL
-  last: document.getElementById('lastUsd'),      // hergebruikt id, nu SOL
+  // Survival
+  goal: document.getElementById('goalUsd'),   // id blijven hergebruiken, nu SOL
+  last: document.getElementById('lastUsd'),
   nextPass: document.getElementById('nextPass'),
   nextFail: document.getElementById('nextFail'),
-
   survStatus: document.getElementById('survStatus'),
   streak: document.getElementById('streak'),
   hype: document.getElementById('hype'),
@@ -28,9 +29,10 @@ const el = {
   progressFill: document.getElementById('progressFill'),
   progressLabel: document.getElementById('progressLabel'),
 
+  // Log
   logList: document.getElementById('logList'),
 
-  // controls
+  // Controls
   muteBtn: document.getElementById('muteBtn'),
   vol: document.getElementById('vol'),
 
@@ -43,6 +45,7 @@ const el = {
   callout: document.getElementById('callout'),
   calloutTrade: document.getElementById('calloutTrade'),
 
+  // Overlays
   confettiLayer: document.getElementById('confettiLayer'),
   toast: document.getElementById('toast'),
   bubble: document.getElementById('chatBubble')
@@ -179,7 +182,7 @@ function showBubble(msg){
 }
 setInterval(()=>{ if (window._latestState) showBubble(bubbleMessage(window._latestState)); }, 25000 + Math.random()*20000);
 
-// === Helpers ===
+// Helpers
 const fmtSOL = (x)=> `\u25CE${Number(x).toFixed(3)}`; // ◎ met 3 decimalen
 
 // === SOCKET STATE ===
@@ -219,9 +222,9 @@ socket.on('state', (s)=>{
   el.survStatus.textContent = sv.lastCheckPassed === null ? '—' : (sv.lastCheckPassed ? '✅ Gehaald' : '❌ Gemist');
   el.survStatus.className = sv.lastCheckPassed ? 'good' : 'bad';
   el.streak.textContent = sv.streak || 0;
-  el.hype.textContent = ( ()=> sv.streak>=6?'🔥 INSANE' : sv.streak>=3?'🚀 Hype' : sv.streak>=1?'⚡ Warm-up' : '–')();
+  el.hype.textContent = hypeText(sv.streak||0);
 
-  // NIEUW: Next goal previews
+  // Next goal previews
   el.nextPass.textContent = fmtSOL(sv.nextGoalOnPassSol ?? 0);
   el.nextFail.textContent = fmtSOL(sv.nextGoalOnFailSol ?? 0);
 
@@ -245,7 +248,7 @@ socket.on('state', (s)=>{
   if (pct - lastPct >= 10) highlightCTA();
   lastPct = pct;
 
-  // Log met icoontjes
+  // Log
   el.logList.innerHTML = '';
   (s.log || []).forEach(item=>{
     const li = document.createElement('li');
@@ -253,7 +256,7 @@ socket.on('state', (s)=>{
     el.logList.appendChild(li);
   });
 
-  // Achievements op streak
+  // Achievements
   if (sv.lastCheckPassed){
     if (sv.streak === 1) toast('🔥 Streak 1 — we’re alive!');
     if (sv.streak === 3) toast('🚀 Streak 3 — Hype mode!');
