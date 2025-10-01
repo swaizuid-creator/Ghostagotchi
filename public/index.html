@@ -11,7 +11,7 @@
   <div id="bg-decor"></div>
 
   <div class="wrap layout">
-    <!-- ===== Header ===== -->
+    <!-- Header -->
     <header class="topbar">
       <h1>👻 Ghostagotchi – AI Survival</h1>
       <div class="controls">
@@ -21,12 +21,13 @@
     </header>
     <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via <strong>SOL</strong> volume.</p>
 
-    <!-- ===== Linkerkolom: Hero + Survival + CTA ===== -->
+    <!-- Linkerkolom -->
     <main class="col-main">
       <!-- HERO -->
       <section class="card head">
         <div class="head-left">
           <div class="avatar-wrap">
+            <div class="avatar-glow"></div>
             <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/>
             <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
           </div>
@@ -39,13 +40,11 @@
               <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span>
             </div>
           </div>
-
           <div class="bars three">
             <label>🍗 Honger</label><progress id="hunger" max="100" value="25"></progress>
             <label>⚡ Energie</label><progress id="energy" max="100" value="80"></progress>
             <label>😊 Blijdschap</label><progress id="happiness" max="100" value="70"></progress>
           </div>
-
           <div class="last">Laatste actie: <span id="lastAction">—</span></div>
         </div>
       </section>
@@ -67,7 +66,8 @@
         </div>
 
         <div class="surv-meta">
-          <p> Status: <strong id="survStatus">—</strong>
+          <p>
+            Status: <strong id="survStatus">—</strong>
             <span class="sep">|</span>
             Streak: <strong id="streak">0</strong>
             <span class="sep">|</span>
@@ -79,6 +79,9 @@
             <span class="sep">|</span>
             bij ❌: <strong id="nextFail">◎0.000</strong>
           </p>
+
+          <!-- NIEUW: badge i.p.v. popup -->
+          <div id="streakBadge" class="streak-badge" hidden>🔥 Streak 1 — we’re alive!</div>
         </div>
 
         <small>Zonder DEX-pair draait demo-volume (voor test).</small>
@@ -103,12 +106,10 @@
       </div>
     </main>
 
-    <!-- ===== Rechterkolom: Log ===== -->
+    <!-- Rechterkolom: Log -->
     <aside class="col-side">
       <section class="card log">
-        <div class="log-header">
-          <h2>📒 Log</h2>
-        </div>
+        <div class="log-header"><h2>📒 Log</h2></div>
         <ul id="logList"></ul>
       </section>
       <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
@@ -117,6 +118,7 @@
 
   <!-- Overlays -->
   <div id="confettiLayer"></div>
+  <!-- toast bestaat nog, maar we gebruiken hem niet meer voor streak -->
   <div id="toast" class="toast" aria-live="polite"></div>
   <div id="chatBubble" class="bubble" hidden></div>
 

@@ -4,6 +4,7 @@ const socket = io();
 const TRADE_URL = 'https://pump.fun/<JOUW_TOKEN_OF_LINK>';
 /* ======================================== */
 
+const SHOW_STREAK_TOAST = false; // popups uit
 const el = {
   // Hero & stats
   name: document.getElementById('name'),
@@ -23,6 +24,7 @@ const el = {
   nextFail: document.getElementById('nextFail'),
   survStatus: document.getElementById('survStatus'),
   streak: document.getElementById('streak'),
+  streakBadge: document.getElementById('streakBadge'),
   hype: document.getElementById('hype'),
   countdown: document.getElementById('countdown'),
   progressBar: document.getElementById('progressBar'),
@@ -51,7 +53,7 @@ const el = {
   bubble: document.getElementById('chatBubble')
 };
 
-// === CTA init ===
+// CTA init
 if (el.ctaBtn) el.ctaBtn.href = TRADE_URL;
 if (el.calloutTrade) el.calloutTrade.href = TRADE_URL;
 if (el.copyLink){
@@ -74,7 +76,7 @@ if (el.toggleQR){
   };
 }
 
-// === AUDIO ===
+// AUDIO
 let sfxMuted = false;
 let globalVol = 0.4;
 let lastLowHealthAt = 0;
@@ -88,7 +90,6 @@ if (el.muteBtn){
 if (el.vol){
   el.vol.oninput = ()=>{ globalVol = (Number(el.vol.value)||0)/100; };
 }
-
 function playSfx(file){
   if (sfxMuted) return;
   const a = new Audio('assets/sfx/' + file);
@@ -96,7 +97,7 @@ function playSfx(file){
   a.play().catch(()=>{});
 }
 
-// === VISUAL HELPERS ===
+// VISUAL HELPERS
 function setGhostImg(file){ el.ghostSprite.src = 'assets/' + file; }
 function maybePlayLowHealth(){
   const now = Date.now();
@@ -123,7 +124,7 @@ function toast(msg){
   el.toast.classList.add('show');
   setTimeout(()=> el.toast.classList.remove('show'), 2200);
 }
-function hypeText(st){ return st>=6?'🔥 INSANE' : st>=3?'🚀 Hype' : st>=1?'⚡ Warm-up' : '–'; }
+function hypeText(st){ return st>=6?'🔥 INSANE' : st>=3?'🚀 Warm-up+' : st>=1?'⚡ Warm-up' : '–'; }
 function moodEmoji(mood){
   const m = (mood||'').toLowerCase();
   if (m.includes('rested') || m.includes('sleep')) return '😴';
@@ -163,7 +164,7 @@ function highlightCTA(){
   b.classList.add('highlight');
   setTimeout(()=> b.classList.remove('highlight'), 1200);
 }
-// Random chat bubble
+// Chat bubble (optioneel)
 const BUBBLES_BASE = ['Feed meeee 🍗','I feel spooky 👻','Hype train? 🚂','Let’s play! 🎮','Sleepy time… 😴'];
 function bubbleMessage(state){
   if (state.pet.hunger >= 80)  return 'So hungry… 🍽️';
@@ -178,12 +179,12 @@ function showBubble(msg){
   b.hidden = false;
   setTimeout(()=> b.hidden = true, 2500);
 }
-setInterval(()=>{ if (window._latestState) showBubble(bubbleMessage(window._latestState)); }, 25000 + Math.random()*20000);
+setInterval(()=>{ if (window._latestState) showBubble(bubbleMessage(window._latestState)); }, 28000 + Math.random()*18000);
 
 // Helpers
-const fmtSOL = (x)=> `\u25CE${Number(x).toFixed(3)}`; // ◎ met 3 decimalen
+const fmtSOL = (x)=> `\u25CE${Number(x).toFixed(3)}`;
 
-// === SOCKET STATE ===
+// SOCKET
 let lastPct = 0;
 socket.on('state', (s)=>{
   window._latestState = s;
@@ -201,36 +202,51 @@ socket.on('state', (s)=>{
   if (p.attention) { el.attentionIcon.hidden = false; maybePlayLowHealth(); }
   else { el.attentionIcon.hidden = true; }
 
-  // Actie → sprite + sfx
   const a = s.lastAction || '';
   if (a.includes('AI: feed'))      { setGhostImg('ghost_feed.png');  playSfx('feed_nom.wav'); }
   else if (a.includes('AI: sleep')){ setGhostImg('ghost_sleep.png'); playSfx('sleep_snore.wav'); }
   else if (a.includes('AI: play')) { setGhostImg('ghost_play.png');  playSfx('play_chime.wav'); }
   else if (a.includes('AI: trick')){ setGhostImg('ghost_trick.png'); playSfx('trick_spooky.wav'); }
-  else if (a.includes('survival ✅')) { setGhostImg('ghost_play.png'); playSfx('play_chime.wav'); if (Date.now()>confettiLockUntil){ confetti(); confettiLockUntil=Date.now()+5000; } toast('✅ Hour cleared!'); highlightCTA(); }
-  else if (a.includes('survival ❌')) { setGhostImg('ghost_trick.png'); playSfx('error_sad.wav'); toast('❌ Missed the goal…'); }
+  else if (a.includes('survival ✅')) {
+    setGhostImg('ghost_play.png'); playSfx('play_chime.wav');
+    if (Date.now()>confettiLockUntil){ confetti(); confettiLockUntil=Date.now()+5000; }
+    if (SHOW_STREAK_TOAST) { /* niet tonen */ }
+    highlightCTA();
+  }
+  else if (a.includes('survival ❌')) { setGhostImg('ghost_trick.png'); playSfx('error_sad.wav'); }
   else { setGhostImg('ghost_idle.png'); }
 
-  // Survival UI (SOL)
+  // Survival UI
   const sv = s.survival || {};
-  const sol = Number(sv.lastHourVolumeSol || 0);
-
   el.goal.textContent = fmtSOL(sv.hourlyGoalSol ?? 0);
-  el.last.textContent = fmtSOL(sol);
+  el.last.textContent = fmtSOL(Number(sv.lastHourVolumeSol || 0));
   el.survStatus.textContent = sv.lastCheckPassed === null ? '—' : (sv.lastCheckPassed ? '✅ Gehaald' : '❌ Gemist');
   el.survStatus.className = sv.lastCheckPassed ? 'good' : 'bad';
   el.streak.textContent = sv.streak || 0;
   el.hype.textContent = hypeText(sv.streak||0);
 
-  // Next goal previews
+  // Next goals
   el.nextPass.textContent = fmtSOL(sv.nextGoalOnPassSol ?? 0);
   el.nextFail.textContent = fmtSOL(sv.nextGoalOnFailSol ?? 0);
 
+  // Streak badge (altijd voelbaar, geen popup)
+  if (sv.streak >= 1){
+    el.streakBadge.hidden = false;
+    el.streakBadge.textContent =
+      sv.streak >= 6 ? '👑 Streak 6 — INSANE!' :
+      sv.streak >= 3 ? '🚀 Streak 3 — Hype mode!' :
+                        '🔥 Streak 1 — we’re alive!';
+  } else {
+    el.streakBadge.hidden = true;
+  }
+
+  // Countdown
   const t = Math.max(0, sv.nextCheckETA || 0);
   const mm = String(Math.floor(t/60)).padStart(2,'0');
   const ss = String(t%60).padStart(2,'0');
   el.countdown.textContent = `${mm}:${ss}`;
 
+  // Progress
   const pct = Math.min(100, Math.round((sv.progress || 0)*100));
   el.progressFill.style.width = pct + '%';
   el.progressLabel.textContent = pct + '%';
@@ -241,7 +257,6 @@ socket.on('state', (s)=>{
   else                        { el.progressBar.classList.remove('glow','pulse','pulse-fast'); }
 
   el.callout.hidden = !(pct < 50);
-
   if (pct - lastPct >= 10) highlightCTA();
   lastPct = pct;
 
@@ -252,11 +267,4 @@ socket.on('state', (s)=>{
     li.textContent = decorateLog(item);
     el.logList.appendChild(li);
   });
-
-  // Achievements
-  if (sv.lastCheckPassed){
-    if (sv.streak === 1) toast('🔥 Streak 1 — we’re alive!');
-    if (sv.streak === 3) toast('🚀 Streak 3 — Hype mode!');
-    if (sv.streak === 6) toast('👑 Streak 6 — INSANE!');
-  }
 });
