@@ -15,6 +15,10 @@
         <header class="topbar">
             <h1>👻 Ghostagotchi – AI Survival</h1>
             <div class="header-actions">
+                <a href="#" class="ghost-btn hype-btn" id="btn-hype">Boost Hype 🚀</a>
+                <a href="#" class="ghost-btn gift-btn" id="btn-gift">Gift Ghost 🎁</a> 
+                <a href="#" class="ghost-btn" id="btn-share-x">Share on X 📢</a>
+
                 <button id="btn-lore" class="ghost-btn">📖 Lore</button>
                 
                 <div class="controls">
@@ -146,21 +150,6 @@
         <button id="btn-lore-close" class="ghost-btn">Close</button>
     </div>
 
-    <div id="debugPanel" style="position:fixed; bottom:0; right:0; background:rgba(0,0,0,0.9); color:#fff; padding:10px; z-index:9999; font-size:12px; display:none;">
-        <strong>STREAMER CONTROLS</strong><br>
-        <button onclick="simulateSurvivalPass()" style="background:#0a0; color:#fff; border:none; margin:2px;">✅ Survival Pass</button>
-        <button onclick="simulateSurvivalFail()" style="background:#a00; color:#fff; border:none; margin:2px;">❌ Survival Fail</button><br>
-        <button onclick="setStats(100)" style="background:#00a; color:#fff; border:none; margin:2px;">Max Stats</button>
-        <button onclick="setStats(10)" style="background:#a0a; color:#fff; border:none; margin:2px;">Min Stats</button>
-    </div>
-
-    <script>
-        // Voeg deze regel toe om het paneel te tonen tijdens de stream/ontwikkeling
-        // Je kunt een geheime toetsencombinatie gebruiken, maar voor nu, toon hem direct.
-        document.addEventListener('DOMContentLoaded', () => {
-             document.getElementById('debugPanel').style.display = 'block';
-        });
-    </script>
     <script src="client.js"></script>
 </body>
 </html>
