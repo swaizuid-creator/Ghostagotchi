@@ -1,5 +1,5 @@
 // =========================================================================
-// 1. Element Selectie (DOM References)
+// 1. Element Selection (DOM References)
 // =========================================================================
 
 const el = {
@@ -22,109 +22,127 @@ const el = {
     // UI
     logList: document.getElementById('logList'),
     toast: document.getElementById('toast'),
-    chatBubble: document.getElementById('chatBubble'), // Behoud voor toekomstige features
-    voteMessage: document.getElementById('voteMessage'), 
+    chatBubble: document.getElementById('chatBubble'), // Maintained for future features
+    voteMessage: document.getElementById('voteMessage'),
 };
 
+// =========================================================================
+// 2. Configuration & Data
+// =========================================================================
+
+/** Constant for stat degradation per minute */
+const DEGRADATION_AMOUNT = {
+    hunger: 2,
+    energy: 1,
+    happiness: 1,
+};
+
+/** Action Configuration: [sfxFile, { stat: change, ... }] */
+const ACTION_CONFIG = {
+    play: { sfx: 'play_chime.wav', H: 0, E: -15, P: 25 },
+    feed: { sfx: 'feed_nom.wav', H: 30, E: 10, P: 0 },
+    energy: { sfx: 'feed_nom.wav', H: 30, E: 10, P: 0 }, // Alias for feed
+    rest: { sfx: 'sleep_zz.wav', H: 0, E: 30, P: -10 },
+    sleep: { sfx: 'sleep_zz.wav', H: 0, E: 30, P: -10 }, // Alias for rest
+    gift: { sfx: 'play_chime.wav', H: 5, E: 0, P: 15 },
+    trick: { sfx: 'trick_scary.wav', H: 0, E: -5, P: 5 },
+    clean: { sfx: 'sfx_clean.wav', H: 0, E: 0, P: 10 },
+    cure: { sfx: 'sfx_cure.wav', H: 0, E: 0, P: 15 },
+};
 
 // =========================================================================
-// 2. Helper Functies (Visuals & Animation)
+// 3. Helper Functions (Visuals & Animation)
 // =========================================================================
 
-/** Speel een geluidseffect (simulatie) */
+/** Plays a sound effect (simulation) */
 function playSfx(filename) {
-    // Implementeer echte audio hier, nu is het een console log
-    // console.log(`[SFX] Playing: ${filename}`); 
+    // Ensure audio files are correctly located in /public/assets/
+    try {
+        const audio = new Audio(`/assets/${filename}`);
+        audio.play().catch(e => console.warn(`[SFX ERROR] Cannot play ${filename}:`, e));
+    } catch (e) {
+        console.warn(`[SFX ERROR] Could not create audio object: ${filename}`);
+    }
 }
 
-/** Stelt de sprite in */
+/** Sets the ghost sprite image source */
 function setGhostImg(filename) {
     if (!el.ghostSprite) return;
-    // Zorgt ervoor dat het pad altijd vanaf de root ('/public/assets/') begint
-    el.ghostSprite.src = `/assets/${filename}`; 
+    // Ensures the path always starts from the root ('/assets/')
+    el.ghostSprite.src = `/assets/${filename}`;
 }
 
 /**
- * Genereert de correcte bestandsnaam op basis van de stage en actie/mood.
- * 🐛 KRITIEKE FIX: Gebruikt kleine letters voor IDLE sprites (compatibel met Linux/Render).
+ * Generates the correct filename based on the stage and action/mood.
  */
 function getSpriteFileName(stage, action, isMood = false) {
-    // Normaliseer stage naam (bijv. 'Teenager' -> 'teen')
+    // Normalize stage name (e.g., 'Teenager' -> 'teen')
     const s = (stage || 'Adult').toLowerCase().split(' ')[0];
+    const a = action.toLowerCase();
 
-    // 1. KRITIEKE, GEDEELDE OF VREEMD BENOEMDE SPRITES
-    if (action === 'rip' || action === 'dying') return 'ghost_rip.png';
-    if (action === 'sick') return `ghost_sick.png`; 
-    
-    // 2. ACTIE SPRITES (Tijdelijke sprites: play, feed, rest, gift etc.)
+    // 1. CRITICAL, SHARED, OR ODDLY NAMED SPRITES
+    if (a === 'rip' || a === 'dying') return 'ghost_rip.png';
+    if (a === 'sick') return `ghost_sick.png`;
+
+    // 2. ACTION SPRITES (Temporary sprites: play, feed, rest, gift etc.)
     if (!isMood) {
-        const commonActions = ['play', 'feed', 'sleep', 'rest', 'trick', 'clean', 'cure', 'gift', 'energy'];
-        if (commonActions.includes(action.toLowerCase())) {
-            
-            // Conventie: ghost_[fase]_[actie].png
+        if (ACTION_CONFIG[a] || a === 'cure' || a === 'clean') {
+            // Stage-specific for Baby/Kid/Teen
             if (s === 'baby' || s === 'kid' || s === 'teen') {
-                return `ghost_${s}_${action}.png`;
+                return `ghost_${s}_${a}.png`;
             }
-            // Adult/Algemene: ghost_actie.png
-            return `ghost_${action}.png`;
+            // Adult/General: ghost_action.png
+            return `ghost_${a}.png`;
         }
     }
 
     // 3. MOOD SPRITES (IDLE STATE: idle, sad, hungry, etc.)
     if (s === 'baby' || s === 'kid' || s === 'teen') {
-        if (action === 'idle') {
-            // ✅ FIX: Gebruikt nu kleine letters voor de filename (baby_idle.png)
-            return `${s}_idle.png`; 
+        if (a === 'idle') {
+            return `${s}_idle.png`; // e.g., baby_idle.png
         }
-        // Vb: ghost_teen_angry.png
-        return `ghost_${s}_${action}.png`;
+        // e.g., ghost_teen_sad.png (used for the 'sad' mood)
+        return `ghost_${s}_${a}.png`;
     }
 
     // 4. Fallback/Adult sprites
-    if (action === 'idle') return 'ghost_idle.png';
-    return `ghost_${action}.png`; // Vb: ghost_sad.png, ghost_hungry.png
+    if (a === 'idle' || a === 'cheerful') return 'ghost_idle.png';
+    return `ghost_${a}.png`; // e.g., ghost_sad.png, ghost_hungry.png
 }
 
 
 /**
- * Voert de visuele en audio feedback van een actie uit.
+ * Executes the visual and audio feedback of an action.
  */
 function handleActionVisuals(action) {
     const currentStage = el.ghostStage ? el.ghostStage.textContent : 'Adult';
-    let spriteAction = action.toLowerCase().trim();
-    let sfxFile = 'default_action.wav';
+    const spriteAction = action.toLowerCase().trim();
+    const config = ACTION_CONFIG[spriteAction];
     
-    // 1. Bepaal SFX
-    switch (spriteAction) {
-        case 'play': sfxFile = 'play_chime.wav'; break;
-        case 'feed': 
-        case 'energy': sfxFile = 'feed_nom.wav'; break; 
-        case 'rest': 
-        case 'sleep': sfxFile = 'sleep_zz.wav'; break;
-        case 'trick': sfxFile = 'trick_scary.wav'; break;
-        case 'clean': sfxFile = 'sfx_clean.wav'; break;
-        case 'cure': sfxFile = 'sfx_cure.wav'; break;
-        case 'gift': sfxFile = 'play_chime.wav'; break; 
-        default: return; 
-    }
-    
-    // 2. Bepaal Sprite via de helper (niet-mood sprite)
+    // Only execute if it's a known action or 'cure'/'clean'
+    if (!config && spriteAction !== 'cure' && spriteAction !== 'clean') return; 
+
+    // 1. Determine Sprite using the helper (non-mood sprite)
     const spriteFile = getSpriteFileName(currentStage, spriteAction, false);
     
+    // 2. Determine SFX (use config or fallback for cure/clean)
+    const sfxFile = config ? config.sfx : (spriteAction === 'clean' ? 'sfx_clean.wav' : 'sfx_cure.wav');
+
     setGhostImg(spriteFile);
     playSfx(sfxFile);
 
-    // Na 1.5 seconde, keer terug naar de basis-mood
+    // After 1.5 seconds, return to the base mood
     setTimeout(() => {
         updatePetSim(); 
     }, 1500); 
 }
 
 
-/** Voegt een logbericht toe aan de zijbalk */
+/** Adds a log message to the sidebar */
 function addLog(message, type = 'SYSTEM') {
     const li = document.createElement('li');
-    const timestamp = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', hour12: false });
+    // Use 'en-US' locale for international stream
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     
     let prefix = `[${timestamp}]`;
     if (type === 'AI') prefix += ' 🧠';
@@ -135,16 +153,19 @@ function addLog(message, type = 'SYSTEM') {
     
     if (el.logList) {
         el.logList.prepend(li);
-        // Beperk de loglijst tot maximaal 20 items
+        // Limit the log list to a maximum of 20 items
         while (el.logList.children.length > 20) {
             el.logList.removeChild(el.logList.lastChild);
         }
     }
 }
 
-/** Toon een melding onderaan het scherm */
+/** Shows a notification at the bottom of the screen */
 function toast(message) {
     if (!el.toast) return;
+    // Prevent multiple overlapping toasts
+    if (el.toast.classList.contains('show')) return; 
+    
     el.toast.textContent = message;
     el.toast.classList.add('show');
     setTimeout(() => {
@@ -152,7 +173,7 @@ function toast(message) {
     }, 2500);
 }
 
-/** Animeer de progress bar waarde (progressief) */
+/** Animates the progress bar value (progressively) */
 function animateProgress(progressElement, targetValue) {
     if (!progressElement) return;
     const startValue = Number(progressElement.value);
@@ -163,7 +184,9 @@ function animateProgress(progressElement, targetValue) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(1, elapsed / duration);
         const currentValue = startValue + (targetValue - startValue) * progress;
-        progressElement.value = currentValue;
+        
+        // Ensure the value stays within [0, 100]
+        progressElement.value = Math.max(0, Math.min(100, currentValue));
 
         if (progress < 1) {
             requestAnimationFrame(step);
@@ -174,93 +197,95 @@ function animateProgress(progressElement, targetValue) {
 
 
 // =========================================================================
-// 3. Stage & Mood Logica (IDLE STATE)
+// 4. Stage & Mood Logic (IDLE STATE)
 // =========================================================================
 
-/** * Hoofdfunctie om de Ghostagotchi's stemming en basis-sprite (IDLE state) bij te werken.
+/** * Main function to update the Ghostagotchi's mood and base sprite (IDLE state).
  */
 function updatePetSim(){
-    // SIMULEER STATS-AFNAME (1x per minuut)
+    // SIMULATE STAT DEGRADATION (1x per minute)
     const H = el.hunger;
     const E = el.energy;
     const P = el.happiness;
 
-    // Verhoog/Verlaag stats, maar zorg voor een minimum van 0
-    animateProgress(H, Math.max(0, (Number(H.value) || 0) - 2));
-    animateProgress(E, Math.max(0, (Number(E.value) || 0) - 1));
-    animateProgress(P, Math.max(0, (Number(P.value) || 0) - 1));
+    // Decrease stats, ensuring a minimum of 0
+    animateProgress(H, Math.max(0, (Number(H.value) || 0) - DEGRADATION_AMOUNT.hunger));
+    animateProgress(E, Math.max(0, (Number(E.value) || 0) - DEGRADATION_AMOUNT.energy));
+    animateProgress(P, Math.max(0, (Number(P.value) || 0) - DEGRADATION_AMOUNT.happiness));
 
     const ageElement = el.ghostAge;
     if(ageElement) {
         let currentAge = parseFloat(ageElement.textContent) || 0;
-        // Age verhoogt met 1/60 (uur per minuut)
+        // Age increases by 1/60 (hour per minute)
         ageElement.textContent = (currentAge + 1 / 60).toFixed(2); 
     }
 
-    // SIMULEER MOOD/SPRITE
+    // SIMULATE MOOD/SPRITE
     const currentHunger = Number(H.value) || 0;
     const currentEnergy = Number(E.value) || 0;
     const currentHappiness = Number(P.value) || 0;
     const currentStage = el.ghostStage ? el.ghostStage.textContent : 'Adult'; 
 
-    let newMood = 'cheerful';
+    let newMood = 'Cheerful';
     let newEmoji = '🙂';
     let newSprite = getSpriteFileName(currentStage, 'idle', true); 
 
-    // 1. Bepaal de meest urgente status (OVERRIDE de IDLE sprite)
+    // 1. Determine the most urgent status (OVERRIDE the IDLE sprite)
     
-    // KRITIEK: Dying
+    // CRITICAL: Dying
     if (currentHunger < 5 || currentEnergy < 5 || (currentStage === 'Adult' && currentHappiness < 5)) {
-        newMood = 'dying'; newEmoji = '💀'; 
+        newMood = 'Dying'; newEmoji = '💀'; 
         newSprite = getSpriteFileName(currentStage, 'rip');
         if(el.attentionIcon) el.attentionIcon.hidden = false;
-        addLog('Ghost is CRITICALLY low on stats! Survival in gevaar.', 'CRITICAL');
+        if (el.mood.textContent !== 'Dying') { 
+            addLog('Ghost is CRITICALLY low on stats! Survival is at risk.', 'CRITICAL');
+        }
     }
-    // ZIEK
+    // SICK (example condition)
     else if (currentStage === 'Baby' && currentHunger < 15 || currentStage === 'Teen' && currentEnergy < 15) {
-        newMood = 'sick'; newEmoji = '🤢'; 
+        newMood = 'Sick'; newEmoji = '🤢'; 
         newSprite = getSpriteFileName(currentStage, 'sick', true);
         if(el.attentionIcon) el.attentionIcon.hidden = false;
     }
-    // SLECHT: Honger
+    // BAD: Hungry
     else if (currentHunger < 30) {
-        newMood = 'hungry'; newEmoji = '😟'; 
-        newSprite = getSpriteFileName(currentStage, 'feed', true); // Gebruik feed/hungry sprite
+        newMood = 'Hungry'; newEmoji = '😟'; 
+        newSprite = getSpriteFileName(currentStage, 'feed', true); // Uses the 'feed' sprite as mood
         if(el.attentionIcon) el.attentionIcon.hidden = false;
     } 
-    // SLECHT: Moe
+    // BAD: Tired
     else if (currentEnergy < 20) {
-        newMood = 'sleepy'; newEmoji = '😴'; 
-        newSprite = getSpriteFileName(currentStage, 'sleepy', true);
+        newMood = 'Sleepy'; newEmoji = '😴'; 
+        newSprite = getSpriteFileName(currentStage, 'sleep', true); // Uses the 'sleep' sprite as mood
         if(el.attentionIcon) el.attentionIcon.hidden = false;
     } 
-    // SLECHT: Verdrietig/Boos
+    // BAD: Sad/Angry
     else if (currentHappiness < 30) {
-        newMood = 'sad'; newEmoji = '😞'; 
+        newMood = 'Sad'; newEmoji = '😞'; 
         newSprite = getSpriteFileName(currentStage, 'sad', true);
         if(el.attentionIcon) el.attentionIcon.hidden = false;
     } 
-    // GOED: Speels/Blij
+    // GOOD: Playful/Happy
     else if (currentHappiness > 80 && currentEnergy > 50) {
-        newMood = 'playful'; newEmoji = '🥳'; 
-        newSprite = getSpriteFileName(currentStage, 'play', true); // Gebruik play sprite
+        newMood = 'Playful'; newEmoji = '🥳'; 
+        newSprite = getSpriteFileName(currentStage, 'play', true); // Uses the 'play' sprite as mood
         if(el.attentionIcon) el.attentionIcon.hidden = true;
     }
-    // Neutraal/Goed: IDLE
+    // Neutral/Good: IDLE
     else {
-        newMood = 'cheerful'; newEmoji = '🙂';
+        newMood = 'Cheerful'; newEmoji = '🙂';
         newSprite = getSpriteFileName(currentStage, 'idle', true);
         if(el.attentionIcon) el.attentionIcon.hidden = true;
     }
 
-    // Update de DOM met de nieuwe waarden
+    // Update the DOM with the new values
     if(el.mood) el.mood.textContent = newMood;
     if(el.moodEmoji) el.moodEmoji.textContent = newEmoji;
     setGhostImg(newSprite); 
 }
 
 
-/** Simuleer een AI-actie op basis van de behoeften */
+/** Simulates an AI action based on needs */
 function simulateAIAction() {
     const H = Number(el.hunger.value) || 0;
     const E = Number(el.energy.value) || 0;
@@ -268,106 +293,98 @@ function simulateAIAction() {
     
     let action = '';
 
-    // Prioriteit 1: Honger
+    // Priority 1: Hunger
     if (H < 30) {
         action = 'feed';
-    // Prioriteit 2: Energie
+    // Priority 2: Energy
     } else if (E < 30) {
         action = 'rest';
-    // Prioriteit 3: Plezier
+    // Priority 3: Happiness
     } else if (P < 40) {
         action = 'play';
-    // WILLEKEURIGE ACTIE
+    // RANDOM ACTION
     } else {
         const choices = ['play', 'feed', 'trick', 'clean'];
         action = choices[Math.floor(Math.random() * choices.length)];
     }
 
     performAction(action, 'AI'); 
-    addLog(`AI koos voor actie: ${action.toUpperCase()}`, 'AI');
+    addLog(`AI chose action: ${action.toUpperCase()}`, 'AI');
 }
 
 // =========================================================================
-// 4. Community Vote Logica
+// 5. Community Vote Logic
 // =========================================================================
 
 let userVoted = false; 
 
-/** Registreert de stem van de gebruiker (simulatie) */
+/** Registers the user's vote (simulation) */
 function registerVote(action) {
-    if (userVoted) return;
+    if (userVoted) return toast('You have already voted this round! Await the result.');
 
-    const voteElement = document.getElementById(`votes${action.charAt(0).toUpperCase() + action.slice(1)}`);
+    const actionKey = action.charAt(0).toUpperCase() + action.slice(1);
+    const voteElement = el[`votes${actionKey}`];
+    
     if (voteElement) {
         voteElement.textContent = Number(voteElement.textContent) + 1;
         
+        // Mark the chosen button
         document.querySelector(`.vote-buttons button[data-action="${action}"]`).classList.add('voted-by-me');
-        if(el.voteMessage) el.voteMessage.textContent = `Je hebt gestemd op ${action.toUpperCase()}. Wacht op de uitslag.`;
+        if(el.voteMessage) el.voteMessage.textContent = `You voted for ${action.toUpperCase()}. Waiting for the result.`;
         
         userVoted = true;
-        toast('Stem geregistreerd! 🗳️');
+        toast('Vote registered! 🗳️');
     }
 }
 
-/** Voert de actie uit (Community of AI) en past de stats aan */
+/** Performs the action (Community, AI, or Gift) and adjusts the stats */
 function performAction(action, initiator = 'VOTE') {
     const H = el.hunger;
     const E = el.energy;
     const P = el.happiness;
     
-    // 1. Pas de Visuals/Audio aan
+    const config = ACTION_CONFIG[action.toLowerCase()];
+    
+    if (!config && action.toLowerCase() !== 'cure' && action.toLowerCase() !== 'clean') {
+        console.error(`Unknown action: ${action}`);
+        return;
+    }
+
+    // 1. Adjust Visuals/Audio
     handleActionVisuals(action); 
 
-    // 2. Pas de Stats aan
-    switch (action.toLowerCase()) {
-        case 'play':
-            animateProgress(P, Math.min(100, (Number(P.value) || 0) + 25));
-            animateProgress(E, Math.max(0, (Number(E.value) || 0) - 15));
-            break;
-        case 'feed':
-        case 'energy': 
-            animateProgress(H, Math.min(100, (Number(H.value) || 0) + 30));
-            animateProgress(E, Math.min(100, (Number(E.value) || 0) + 10)); 
-            break;
-        case 'rest':
-        case 'sleep':
-            animateProgress(E, Math.min(100, (Number(E.value) || 0) + 30));
-            animateProgress(P, Math.max(0, (Number(P.value) || 0) - 10)); 
-            break;
-        case 'gift': 
-            animateProgress(P, Math.min(100, (Number(P.value) || 0) + 15));
-            animateProgress(H, Math.min(100, (Number(H.value) || 0) + 5));
-            break;
-        case 'trick':
-            animateProgress(P, Math.min(100, (Number(P.value) || 0) + 5)); 
-            animateProgress(E, Math.max(0, (Number(E.value) || 0) - 5)); 
-            break;
-        case 'clean':
-            animateProgress(P, Math.min(100, (Number(P.value) || 0) + 10));
-            break;
-        case 'cure':
-            animateProgress(P, Math.min(100, (Number(P.value) || 0) + 15));
-            break;
+    // 2. Adjust Stats (use config)
+    if (config) {
+        // animateProgress handles boundary checks (0 and 100)
+        if (config.H) animateProgress(H, (Number(H.value) || 0) + config.H);
+        if (config.E) animateProgress(E, (Number(E.value) || 0) + config.E);
+        if (config.P) animateProgress(P, (Number(P.value) || 0) + config.P);
+    } else if (action.toLowerCase() === 'cure') {
+        // Manual stat increase for special actions
+        animateProgress(P, Math.min(100, (Number(P.value) || 0) + 15));
+    } else if (action.toLowerCase() === 'clean') {
+        animateProgress(P, Math.min(100, (Number(P.value) || 0) + 10));
     }
     
     // 3. Update Log
-    // Gebruikt de 'lastAction' ID die we in de HTML hebben behouden.
-    el.lastAction.textContent = `${initiator}: ${action.toUpperCase()}`;
-    if(initiator === 'VOTE') addLog(`Community koos: ${action.toUpperCase()}`, 'VOTE');
+    if(el.lastAction) el.lastAction.textContent = `${initiator}: ${action.toUpperCase()}`;
+    if(initiator === 'VOTE') addLog(`Community chose: ${action.toUpperCase()}`, 'VOTE');
 }
 
 
-/** Verwerkt het einde van een stemronde */
+/** Processes the end of a voting round */
 function endVoteRound() {
     const votes = {
-        play: Number(el.votesPlay.textContent),
-        energy: Number(el.votesEnergy.textContent),
-        rest: Number(el.votesRest.textContent),
+        play: Number(el.votesPlay.textContent) || 0,
+        energy: Number(el.votesEnergy.textContent) || 0,
+        rest: Number(el.votesRest.textContent) || 0,
     };
 
     let winningAction = 'rest';
     let maxVotes = votes.rest;
+    let totalVotes = votes.play + votes.energy + votes.rest;
 
+    // Determine the winning action
     if (votes.play > maxVotes) {
         winningAction = 'play';
         maxVotes = votes.play;
@@ -377,19 +394,19 @@ function endVoteRound() {
         maxVotes = votes.energy;
     }
 
-    if (maxVotes === 0) {
-        addLog('Geen stemmen in deze ronde. AI neemt de controle over.', 'SYSTEM');
+    if (totalVotes === 0) {
+        addLog('No votes cast this round. AI takes control.', 'SYSTEM');
         simulateAIAction();
     } else {
         performAction(winningAction, 'VOTE');
     }
     
-    // Reset de stemronde
+    // Reset the voting round
     el.votesPlay.textContent = 0;
     el.votesEnergy.textContent = 0;
     el.votesRest.textContent = 0;
     userVoted = false;
-    if(el.voteMessage) el.voteMessage.textContent = 'Stem op de volgende actie. Je hebt nog niet gestemd in deze ronde.';
+    if(el.voteMessage) el.voteMessage.textContent = 'Vote for the next action. You have not voted this round yet.';
     document.querySelectorAll('.vote-buttons button').forEach(btn => {
         btn.classList.remove('voted-by-me');
     });
@@ -397,67 +414,82 @@ function endVoteRound() {
 
 
 // =========================================================================
-// 5. Initialisatie & Event Handlers
+// 6. Initialization & Event Handlers
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial call om de basis-mood in te stellen (Gebruikt de waarde uit de HTML: "Baby")
+    // 🔥 CRITICAL CHECK: Ensure essential elements exist
+    if (!el.hunger || !el.energy || !el.happiness || !el.ghostSprite) {
+        console.error("Error: Essential DOM elements for the Ghostagotchi (stats/sprite) are missing. Simulation cannot start.");
+        return; 
+    }
+
+    // Initial call to set the base mood (Uses the value from the HTML)
     updatePetSim(); 
     
-    // Start de stat-degradatie en mood-update lus (elke 1 minuut)
+    // Start the stat degradation and mood update loop (every 1 minute = 60000ms)
     setInterval(updatePetSim, 60000); 
 
-    // Event Listeners voor de Community Votes
-    document.getElementById('votePlay').addEventListener('click', () => registerVote('play'));
-    document.getElementById('voteEnergy').addEventListener('click', () => registerVote('energy')); 
-    document.getElementById('voteRest').addEventListener('click', () => registerVote('rest'));
+    // Event Listeners for Community Votes
+    if (document.getElementById('votePlay')) document.getElementById('votePlay').addEventListener('click', () => registerVote('play'));
+    if (document.getElementById('voteEnergy')) document.getElementById('voteEnergy').addEventListener('click', () => registerVote('energy')); 
+    if (document.getElementById('voteRest')) document.getElementById('voteRest').addEventListener('click', () => registerVote('rest'));
     
-    // Event Listener voor de Gift knop
-    document.getElementById('btn-gift').addEventListener('click', (e) => {
-        e.preventDefault();
-        performAction('gift', 'GIFT');
-        toast('🎁 De Ghost is blij met je gift! (Stats +)');
-    });
+    // Event Listener for the Gift button
+    if (document.getElementById('btn-gift')) {
+        document.getElementById('btn-gift').addEventListener('click', (e) => {
+            e.preventDefault();
+            performAction('gift', 'GIFT');
+            toast('🎁 The Ghost is happy with your gift! (Stats +)');
+        });
+    }
 
-    // Placeholder voor CTA's (Share X en Boost Hype)
-    document.getElementById('btn-share-x').addEventListener('click', (e) => {
-        e.preventDefault();
-        toast('Share on X is nog in ontwikkeling! 📢');
-    });
-    document.getElementById('btn-hype').addEventListener('click', (e) => {
-        e.preventDefault();
-        toast('Boost Hype is nog in ontwikkeling! 🚀');
-    });
+    // Placeholder for CTAs (Share X and Boost Hype)
+    if (document.getElementById('btn-share-x')) {
+        document.getElementById('btn-share-x').addEventListener('click', (e) => {
+            e.preventDefault();
+            toast('Share on X is still in development! 📢');
+        });
+    }
+    if (document.getElementById('btn-hype')) {
+        document.getElementById('btn-hype').addEventListener('click', (e) => {
+            e.preventDefault();
+            toast('Boost Hype is still in development! 🚀');
+        });
+    }
 
 
-    // Event Listener voor de Lore Modal
+    // Event Listener for the Lore Modal
     const loreBtn = document.getElementById('btn-lore');
     const loreModal = document.getElementById('loreModal');
     const loreCloseBtn = document.getElementById('btn-lore-close');
     
-    if(loreBtn) loreBtn.addEventListener('click', () => {
-        if(loreModal) loreModal.hidden = false;
-    });
-    if(loreCloseBtn) loreCloseBtn.addEventListener('click', () => {
-        if(loreModal) loreModal.hidden = true;
-    });
+    if(loreBtn && loreModal && loreCloseBtn) {
+        loreBtn.addEventListener('click', () => {
+            loreModal.hidden = false;
+        });
+        loreCloseBtn.addEventListener('click', () => {
+            loreModal.hidden = true;
+        });
+    }
 
 
-    // Simuleer een AI-actie om de 5 minuten voor variatie
+    // Simulate an AI action every 5 minutes for variety
     setInterval(simulateAIAction, 300000);
 
-    // Simuleer de stemronde (2 minuten per ronde)
+    // Simulate the voting round (2 minutes per round = 120 seconds)
     let voteTime = 120; 
     function updateVoteCountdown() {
         if (voteTime <= 0) {
             endVoteRound();
             voteTime = 120;
         }
+        // Use '00' padding for minutes and seconds
         const minutes = Math.floor(voteTime / 60).toString().padStart(2, '0');
         const seconds = (voteTime % 60).toString().padStart(2, '0');
         if (el.voteCountdown) el.voteCountdown.textContent = `${minutes}:${seconds}`;
         voteTime--;
     }
-    updateVoteCountdown(); 
+    updateVoteCountdown(); // Call immediately to start
     setInterval(updateVoteCountdown, 1000);
 });

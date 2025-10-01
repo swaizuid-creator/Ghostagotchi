@@ -1,62 +1,92 @@
-// Ghostagotchi – Fused Survival & Schema AI
+// server.js - Ghostagotchi: Fused Survival, AI & Solana BLINKS
+
+// ===============================================
+// === 1. Imports & Config ===
+// ===============================================
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 
-// ---- Configuration via Environment Variables ----
+// Solana BLINK & Web3 Imports
+const { 
+    Connection, 
+    PublicKey, 
+    SystemProgram, 
+    TransactionMessage, 
+    VersionedTransaction 
+} = require('@solana/web3.js');
+const { 
+    ActionGetResponse, 
+    ActionPostResponse 
+} = require('@solana/actions');
+
+
+// ---- Server Configuration ----
 const PORT = process.env.PORT || 3000;
 const DEX_PAIR_URL = process.env.DEX_PAIR_URL || ""; // e.g., https://api.dexscreener.com/latest/dex/pairs/solana/<pairId>
-
-// ---- Check Interval ----
 const CHECK_MINUTES = Number(process.env.CHECK_MINUTES || 60);
 
 // ---- Dynamic Goals (SOL) ----
-const GOAL_MODE = (process.env.GOAL_MODE || 'RAMP').toUpperCase(); // "RAMP" or "LADDER"
+const GOAL_MODE = (process.env.GOAL_MODE || 'RAMP').toUpperCase(); 
 const GOAL_BASE_SOL = Number(process.env.GOAL_BASE_SOL || 0.10); 
 const GOAL_MIN_SOL  = Number(process.env.GOAL_MIN_SOL  || 0.05);
 const GOAL_MAX_SOL  = Number(process.env.GOAL_MAX_SOL  || 50);
-
 const GOAL_UP_PCT   = Number(process.env.GOAL_UP_PCT   || 0.15); 
 const GOAL_DOWN_PCT = Number(process.env.GOAL_DOWN_PCT || 0.10); 
-
 const LADDER_STR = process.env.GOAL_STEP_SOL_LIST || "0.10,0.15,0.20,0.30,0.45,0.60,0.90,1.30,2.00";
 const GOAL_STEPS = LADDER_STR.split(',').map(s=>Number(s.trim())).filter(n=>Number.isFinite(n) && n>0);
+
+// ---- Solana BLINK Configuration ----
+// !!! VERVANG DIT MET JOUW ECHTE WALLET ADRES !!!
+const GHOSTAGOTCHI_FEE_ACCOUNT = new PublicKey('3a9PFxBxZU7kB8Sd95gud361t9LecuB54a1VrZjR6JnD'); 
+const BLINK_AMOUNT_LAMPORTS = 50000; // 0.00005 SOL
+const SOLANA_CONNECTION = new Connection('https://api.mainnet-beta.solana.com'); 
+
 
 // ---- AI Actions & Schema ----
 const ACTIONS = {
   sleep: { label: 'sleep', sprite: 'ghost_sleep.png', duration: 180, perSec: { hunger:+0.05, energy:+0.35, happiness:+0.02 } },
   play:  { label: 'play', sprite: 'ghost_play.png', duration: 60,  perSec: { hunger:+0.08, energy:-0.12, happiness:+0.30 } },
-  feed:  { label: 'feed', sprite: 'ghost_feed.png', duration: 30,  perSec: { hunger:-0.80, energy:+0.05, happiness:+0.10 } }, // Negative: reduces hunger
+  feed:  { label: 'feed', sprite: 'ghost_feed.png', duration: 30,  perSec: { hunger:-0.80, energy:+0.05, happiness:+0.10 } },
   trick: { label: 'trick',sprite: 'ghost_trick.png',duration: 40,  perSec: { hunger:+0.04, energy:-0.06, happiness:+0.22 } },
   rest:  { label: 'rest', sprite: 'ghost_idle.png', duration: 45,  perSec: { hunger:+0.03, energy:+0.12, happiness:+0.05 } }
 };
 const PLAYLIST = ['sleep','play','feed','trick','play','rest'];
-const LOG_MAX = 30; // Max number of log entries
-const HYPE_COOLDOWN = 60*5; // 5 minutes
+const LOG_MAX = 30; 
+const HYPE_COOLDOWN = 60*5; 
 
-// ---- GHOST LIFECYCLE CONFIGURATION (NEW) ----
-// Threshold is the minimum successful hours (ageHours) to reach this stage
-// Sensitivity adjusts the rate of stat decay (1.5 = 50% faster decay/more vulnerable)
+// ---- GHOST LIFECYCLE CONFIGURATION ----
 const GHOST_STAGES = [
-    { name: 'Baby',  threshold: 0,     sprite: 'ghost_baby.png',  sensitivity: 1.5 },  // Start
-    { name: 'Kid',   threshold: 12,    sprite: 'ghost_kid.png',    sensitivity: 1.2 },  // After 12 successful hours
-    { name: 'Teen',  threshold: 48,    sprite: 'ghost_teen.png',   sensitivity: 1.0 },  // After 48 successful hours (2 days)
-    { name: 'Adult', threshold: 168,   sprite: 'ghost_adult.png',  sensitivity: 0.8 }  // After 168 successful hours (1 week)
+    { name: 'Baby',  threshold: 0,     sprite: 'ghost_baby_idle.png',  sensitivity: 1.5 },  
+    { name: 'Kid',   threshold: 12,    sprite: 'ghost_kid_idle.png',    sensitivity: 1.2 },  
+    { name: 'Teen',  threshold: 48,    sprite: 'ghost_teen_idle.png',   sensitivity: 1.0 },  
+    { name: 'Adult', threshold: 168,   sprite: 'ghost_adult_idle.png',  sensitivity: 0.8 }  
 ];
 
+// ===============================================
+// === 2. Initialization & Server Setup ===
+// ===============================================
 
-// ---- Initialization & Server ----
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { 
+    cors: { 
+        origin: "*", // Essentieel voor BLINKs en externe clients
+        methods: ["GET", "POST"]
+    } 
+});
 
+// Middleware voor statische bestanden en JSON parsing (BELANGRIJK VOOR POST BLINK!)
 app.use(express.static('public'));
+app.use(express.json()); 
+
 
 // ---- STATE & AI Schema Variables ----
 let nowSec = Math.floor(Date.now()/1000);
-let current = null; // Current action
-let queue = [];   // Action queue
-const hypeMap = new Map(); // Cooldown for hype
+let current = null; 
+let queue = [];   
+const hypeMap = new Map(); 
 
 const state = {
   pet: { 
@@ -65,10 +95,9 @@ const state = {
     hunger: 50, 
     energy: 70, 
     happiness: 80, 
-    hype: 50, // Set initial hype higher
+    hype: 50, 
     attention: false 
   },
-  // GHOST LIFECYCLE STATE (NEW)
   ghost: {
     stage: GHOST_STAGES[0].name,     
     ageHours: 0,      
@@ -90,24 +119,117 @@ const state = {
     nextGoalOnPassSol: null,
     nextGoalOnFailSol: null
   },
-  // timeline: [] // REMOVED
 };
 
-// ---- Helpers ----
+// ===============================================
+// === 3. Solana BLINK API Routes ===
+// ===============================================
+
+// GET handler: Voor het weergeven van de BLINK metadata
+app.get('/api/actions/feed-ghost', async (req, res) => {
+    // CORS headers voor BLINKs (redundant door Socket.io config, maar veiliger)
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    try {
+        const stage = GHOST_STAGES.find(s => s.name === state.ghost.stage) || GHOST_STAGES[0];
+        // Belangrijk: gebruik de sprite van de huidige stage
+        const iconPath = req.protocol + '://' + req.get('host') + '/' + stage.sprite; 
+
+        const solAmount = BLINK_AMOUNT_LAMPORTS / 10**9;
+        const response = new ActionGetResponse({
+            icon: iconPath,
+            title: `Voed de ${state.ghost.stage} Ghostagotchi`,
+            description: `Help de Ghostagotchi te overleven en te evolueren. Voed hem met ${solAmount} SOL. Huidige leeftijd: ${state.ghost.ageHours} uur.`,
+            label: `Voed met ${solAmount} SOL`,
+            links: {
+                actions: [
+                    {
+                        label: `Betaal ${solAmount} SOL`,
+                        href: `/api/actions/feed-ghost?account={account}`, // Template voor de POST
+                    },
+                ],
+            },
+        });
+        return res.status(200).json(response);
+    } catch (e) {
+        console.error('BLINK GET Fout:', e);
+        return res.status(500).json({ message: 'Interne serverfout bij BLINK metadata ophalen.' });
+    }
+});
+
+// POST handler: Voor het aanmaken en retourneren van de transactie
+app.post('/api/actions/feed-ghost', async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    try {
+        // De BLINK specificatie verwacht 'account' in de query, maar check voor de zekerheid ook de body
+        const account = req.query.account || req.body.account; 
+        if (!account) {
+            return res.status(400).json({ message: 'Wallet-adres (account) ontbreekt in de aanroep.' });
+        }
+        
+        const payerKey = new PublicKey(account);
+
+        // 1. Maak de "transfer instructie" aan
+        const ix = SystemProgram.transfer({
+            fromPubkey: payerKey,
+            toPubkey: GHOSTAGOTCHI_FEE_ACCOUNT,
+            lamports: BLINK_AMOUNT_LAMPORTS,
+        });
+
+        // 2. Haal recente blockhash op
+        const latestBlockhash = await SOLANA_CONNECTION.getLatestBlockhash();
+
+        // 3. Maak de Versioned Transaction
+        const message = new TransactionMessage({
+            payerKey: payerKey,
+            recentBlockhash: latestBlockhash.blockhash,
+            instructions: [ix],
+        }).compileToV0Message(); // V0 message is de standaard voor BLINKs
+
+        const transaction = new VersionedTransaction(message);
+
+        // 4. Stuur de geserialiseerde transactie terug naar de wallet
+        const serializedTransaction = transaction.serialize();
+        const base64Transaction = serializedTransaction.toString('base64');
+
+        const solAmount = BLINK_AMOUNT_LAMPORTS / 10**9;
+        const response = new ActionPostResponse({
+            transaction: base64Transaction,
+            message: `Je hebt de Ghostagotchi gevoed met ${solAmount} SOL! Hij is dankbaar.`,
+        });
+
+        // ** GHOSTAGOTCHI GAME LOGIC UPDATE **
+        io.emit('gift'); // Activeer de community event handler
+        
+        return res.status(200).json(response);
+
+    } catch (e) {
+        console.error('BLINK POST Fout:', e.message);
+        return res.status(500).json({ message: `Fout bij transactie aanmaken: ${e.message}` });
+    }
+});
+
+// ===============================================
+// === 4. Game Logic & Helpers ===
+// ===============================================
+
 function clamp(n, min=0, max=100){ return Math.max(min, Math.min(max, n)); }
-function roundSol(x){ return Math.round(x*1000)/1000; } // 3 decimals
+function roundSol(x){ return Math.round(x*1000)/1000; } 
 function broadcast(){ 
-  // state.timeline = buildPublicTimeline(); // REMOVED
   io.emit('state', state); 
 }
 
 function addLog(msg){
-  const time = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); // English time format
+  const time = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); 
   state.log.unshift(`[${time}] ${msg}`);
   if (state.log.length > LOG_MAX) state.log.pop();
 }
 
-// Update pet-stats and mood for Survival Checks & Community Events
 function applyMood(action){
   const p = state.pet;
   state.lastAction = action;
@@ -147,17 +269,14 @@ function startAction(key) {
 function tickStats() {
   if (!current) return;
   
-  // Apply STAGE SENSITIVITY (NEW)
   const currentStage = GHOST_STAGES.find(s => s.name === state.ghost.stage) || GHOST_STAGES[0];
   const sensitivity = currentStage.sensitivity;
   const eff = ACTIONS[current.key].perSec;
   
-  // Adjust stat changes based on sensitivity factor
   state.pet.hunger    = clamp(state.pet.hunger + (eff.hunger * sensitivity));
   state.pet.energy    = clamp(state.pet.energy + (eff.energy * sensitivity));
   state.pet.happiness = clamp(state.pet.happiness + (eff.happiness * sensitivity));
 
-  // Mood adjustment based on current action
   if (current.key === 'sleep') state.pet.mood = 'rested';
   else if (current.key === 'play') state.pet.mood = 'playful';
   else if (current.key === 'feed') state.pet.mood = 'satisfied';
@@ -173,12 +292,6 @@ function maybeAdvance() {
   startAction(next.key);
 }
 
-/* function buildPublicTimeline() {  // REMOVED
-  const items = [];
-  if (current) items.push({ key: current.key, startAt: current.startedAt, endAt: current.endsAt, now: nowSec });
-  queue.slice(0,7).forEach(q=>items.push({ key:q.key,startAt:q.startAt,endAt:q.endAt }));
-  return items;
-} */
 
 // ---- Dexscreener → 1H volume in SOL ----
 async function fetchHourlyVolumeSol(){
@@ -267,19 +380,19 @@ async function survivalCheck(){
 
   if (passed){
     s.streak += 1;
-    state.ghost.ageHours += 1; // INCREASE AGE ON SUCCESS
+    state.ghost.ageHours += 1; 
     applyMood('survival ✅');
     addLog(`✅ Survival goal passed: ${roundSol(solVol)} ◎ / ${s.hourlyGoalSol} ◎ (streak ${s.streak})`);
     s.hourlyGoalSol = commitGoalAfterPass(s.hourlyGoalSol);
   }else{
     s.streak = 0;
-    state.ghost.ageHours = Math.max(0, state.ghost.ageHours - 2); // AGE DECREASE ON FAILURE
+    state.ghost.ageHours = Math.max(0, state.ghost.ageHours - 2); 
     applyMood('survival ❌');
     addLog(`❌ Survival goal missed: ${roundSol(solVol)} ◎ / ${s.hourlyGoalSol} ◎`);
     s.hourlyGoalSol = commitGoalAfterFail(s.hourlyGoalSol);
   }
   
-  // --- STAGE CHECK LOGIC (NEW) ---
+  // --- STAGE CHECK LOGIC ---
   let currentStage = GHOST_STAGES[0];
   for (const stage of GHOST_STAGES) {
     if (state.ghost.ageHours >= stage.threshold) {
@@ -298,11 +411,14 @@ async function survivalCheck(){
   broadcast();
 }
 
-// ---- INIT ----
+// ===============================================
+// === 5. Init & Main Loop ===
+// ===============================================
+
 // Initialize AI schema
 if (!current) { startAction('sleep'); buildQueue(); } 
 
-// Initialize ladder-index (if LADDER mode is chosen)
+// Initialize ladder-index
 if (GOAL_MODE === 'LADDER' && GOAL_STEPS.length) {
   const g = state.survival.hourlyGoalSol;
   let idx = 0, bestDiff = Infinity;
@@ -326,7 +442,7 @@ setInterval(()=>{
   updateAttentionFlag();
   state.tick += 1;
 
-  // 3. Hype Decay (NEW)
+  // 3. Hype Decay
   state.pet.hype = clamp(state.pet.hype-0.05, 0, 100); 
   
   // 4. Survival ETA
@@ -336,9 +452,13 @@ setInterval(()=>{
 }, 1000);
 
 // ---- Survival Timer ----
+// Start de eerste check na 10 seconden, dan elke CHECK_MINUTES
 setTimeout(()=>{ survivalCheck(); setInterval(survivalCheck, CHECK_MINUTES*60*1000); }, 10*1000);
 
-// ---- Sockets & Community Events ----
+// ===============================================
+// === 6. Sockets & Community Events ===
+// ===============================================
+
 io.on('connection', (socket)=>{ 
   addLog(`👥 New user joined`);
   socket.emit('state', state); 
@@ -346,24 +466,27 @@ io.on('connection', (socket)=>{
   socket.on('hype',()=>{
     const last = hypeMap.get(socket.id)||0;
     if (nowSec-last < HYPE_COOLDOWN) {
-      socket.emit('toast','⏳ Wait a bit before boosting again!');
+      socket.emit('toast','⏳ Wacht even voor een nieuwe hype boost!');
       return;
     }
     hypeMap.set(socket.id, nowSec);
     state.pet.hype = clamp(state.pet.hype+20,0,100);
     applyMood('community 🚀'); 
-    addLog(`🚀 Community hype boost! Ghost feels excited!`);
+    addLog(`🚀 Community hype boost! Ghost voelt zich excited!`);
     broadcast();
   });
 
   socket.on('gift',()=>{
+    // Dit wordt aangeroepen door de socket event EN door een succesvolle BLINK
     applyMood('community 💎');
-    addLog(`💎 Someone gifted SOL! Ghost feels grateful!`);
+    addLog(`💎 Iemand gifted SOL! Ghost voelt zich dankbaar!`);
     broadcast();
   });
 });
 
+
+// ---- START SERVER ----
 server.listen(PORT, ()=>{
-  console.log(`Ghostagotchi live on http://localhost:${PORT}`);
+  console.log(`Ghostagotchi live op http://localhost:${PORT}`);
   if (!DEX_PAIR_URL) console.log('DEMO MODE active (DEX_PAIR_URL not set).');
 });

@@ -3,154 +3,385 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Ghostagotchi – AI Survival</title>
-    <link rel="stylesheet" href="style.css"/>
-    </head>
-<body>
-    <div id="bg-decor"></div>
+    <title>👻 Ghostagotchi – AI Survival</title>
+    <!-- Load Tailwind CSS for fast, responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font import and basic styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        :root {
+            --primary: #f2a649; /* Orange/Gold */
+            --secondary: #3b82f6; /* Blue */
+            --bg-dark: #121212;
+            --bg-light: #1f1f1f;
+            --text-light: #e5e7eb;
+            --shadow-glow: 0 0 10px rgba(242, 166, 73, 0.5), 0 0 20px rgba(242, 166, 73, 0.2);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .wrap {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
 
+        /* CARD STYLING */
+        .card {
+            background-color: var(--bg-light);
+            border: 2px solid var(--primary);
+            border-radius: 1.5rem; /* Rounded corners */
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), var(--shadow-glow);
+        }
+
+        /* BUTTON STYLING */
+        .ghost-btn, .cta-btn {
+            font-weight: 700;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border: 2px solid;
+            white-space: nowrap; /* Prevent button text from wrapping */
+        }
+        .ghost-btn {
+            background-color: var(--bg-dark);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .ghost-btn:hover {
+            background-color: var(--primary);
+            color: var(--bg-dark);
+            box-shadow: 0 0 10px var(--primary);
+        }
+        .cta-btn {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: var(--bg-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .cta-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        /* PROGRESS BARS */
+        progress {
+            /* Standard browser reset */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #333;
+            margin-bottom: 8px;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #333;
+            border-radius: 8px;
+        }
+        progress::-webkit-progress-value {
+            background-color: var(--secondary);
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+        progress#hunger::-webkit-progress-value { background-color: #ef4444; } /* Red */
+        progress#energy::-webkit-progress-value { background-color: #3b82f6; } /* Blue */
+        progress#happiness::-webkit-progress-value { background-color: #10b981; } /* Green */
+
+
+        /* GHOST AVATAR */
+        .avatar {
+            width: 150px;
+            height: 150px;
+            animation: float 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(242, 166, 73, 0.7));
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .avatar-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary);
+            opacity: 0.1;
+            filter: blur(20px);
+            border-radius: 50%;
+        }
+        .avatar-wrap {
+            /* Ensures mobile view keeps the ghost centered if space is tight */
+            min-width: 150px; 
+            min-height: 150px;
+        }
+
+        /* RESPONSIVE LAYOUT */
+        .layout {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 1024px) {
+            .layout {
+                grid-template-columns: 2fr 1fr; /* Main content wider on desktop */
+            }
+        }
+        .head {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .head {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            .head-right { flex-grow: 1; }
+        }
+        .row { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .sep { color: #555; margin: 0 0.5rem; }
+        .sub { color: #aaa; font-size: 0.9em; }
+
+        /* Hype Bar Styling */
+        .hype-bar {
+            background-color: #333;
+            border-radius: 8px;
+            height: 20px;
+            overflow: hidden;
+        }
+        #hype-fill {
+            height: 100%;
+            background-color: #f59e0b;
+            transition: width 0.5s ease;
+            border-radius: 8px;
+        }
+        
+        /* Log List Styling */
+        #logList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #logList li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #2d3748; /* Subtle separator */
+        }
+        #logList li:last-child {
+            border-bottom: none;
+        }
+
+        /* Toast & Modals */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateY(50px);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .lore-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .lore-modal h2 { margin-bottom: 1rem; }
+        .lore-modal button { margin-top: 1rem; }
+    </style>
+    <!-- Load Socket.io and Tone.js (Audio) -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+</head>
+<body>
+    
     <div class="wrap">
         
-        <header class="topbar">
-            <h1>👻 Ghostagotchi – AI Survival</h1>
-            <div class="header-actions">
-                <a href="#" class="ghost-btn hype-btn" id="btn-hype">Boost Hype 🚀</a>
-                <a href="#" class="ghost-btn gift-btn" id="btn-gift">Gift Ghost 🎁</a> 
-                <a href="#" class="ghost-btn" id="btn-share-x">Share on X 📢</a>
+        <!-- Header & Top Actions -->
+        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center topbar gap-4 p-4">
+            <h1 class="text-3xl font-black text-white">👻 Ghostagotchi – AI Survival</h1>
+            <div class="flex flex-wrap gap-2 header-actions">
+                <!-- Buttons are now all English -->
+                <button class="ghost-btn hype-btn" id="btn-hype">Boost Hype 🚀</button>
+                <button class="ghost-btn" id="btn-share-x">Share on X 📢</button>
 
                 <button id="btn-lore" class="ghost-btn">📖 Lore</button>
                 
-                <div class="controls">
-                    <button id="muteBtn" class="mute">🔇 Sound Off</button>
-                    <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/> 
+                <div class="flex items-center gap-2 controls">
+                    <button id="muteBtn" class="ghost-btn">🔇 Sound Off</button>
+                    <input id="vol" type="range" min="0" max="100" value="40" title="SFX Volume" class="w-20 lg:w-32"/> 
                 </div>
             </div>
         </header>
-        <p class="sub">AI-driven Halloween Tamagotchi. The community "feeds" it via <strong>SOL</strong> volume.</p>
+        <p class="sub text-center lg:text-left">
+            AI-driven Halloween Tamagotchi. The community "feeds" it via **SOL** volume, powered by a **Solana BLINK**.
+        </p>
         
         <div class="layout">
             
-            <main class="col-main">
+            <main class="col-main flex flex-col gap-6">
+                
+                <!-- GHOST STATUS CARD -->
                 <section class="card head">
-                    <div class="avatar-wrap">
-                        <div class="avatar-glow"></div>
-                        <img id="ghostSprite" src="/assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/> 
-                        <div id="attentionIcon" class="attention" title="Needs attention" hidden>⚠️</div>
+                    <div class="avatar-wrap relative">
+                        <div class="avatar-glow absolute inset-0"></div>
+                        <!-- Default asset, will be replaced by JS -->
+                        <img id="ghostSprite" src="https://placehold.co/150x150/121212/F2A649?text=GHOST" alt="Ghostagotchi" class="avatar z-10"/> 
+                        <div id="attentionIcon" class="attention absolute top-0 right-0 text-3xl z-20" title="Needs attention" hidden>⚠️</div>
                     </div>
-                    <div class="head-right">
-                        <div class="row">
-                            <div>Name: <strong id="name">Ghostagotchi</strong></div>
-                            <div>Mood: <strong id="mood">cheerful</strong> <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span> </div>
+                    
+                    <div class="head-right w-full">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>Name: <strong id="name" class="text-white">Ghostagotchi</strong></div>
+                            <div>Mood: <strong id="mood" class="text-white">Cheerful</strong> <span id="moodEmoji" class="text-xl" aria-hidden="true">🙂</span> </div>
+                            <div>Stage: <strong id="ghostStage" class="text-white">Baby</strong> </div>
+                            <div>Age: <span id="ghostAge" class="text-white">0.00</span> hours</div>
                         </div>
-                        <div class="bars three">
-                            <label>🍗 Hunger</label><progress id="hunger" max="100" value="75"></progress>
-                            <label>⚡ Energy</label><progress id="energy" max="100" value="80"></progress>
-                            <label>😊 Happiness</label><progress id="happiness" max="100" value="70"></progress>
+                        
+                        <div class="bars three mt-4">
+                            <label class="text-sm font-bold">🍗 Hunger</label><progress id="hunger" max="100" value="75"></progress>
+                            <label class="text-sm font-bold">⚡ Energy</label><progress id="energy" max="100" value="80"></progress>
+                            <label class="text-sm font-bold">😊 Happiness</label><progress id="happiness" max="100" value="70"></progress>
                         </div>
-                        <div class="last">Last Action: <span id="lastAction">—</span></div>
-                        <div class="last" style="margin-top: 8px;">
-                            Stage: <strong id="ghostStage">Baby</strong> 
-                            <span class="sep">|</span> 
-                            Age: <span id="ghostAge">0.00</span> hours
-                        </div>
+                        <div class="last text-sm mt-4">Last Action (AI): <span id="lastAction" class="font-bold">—</span></div>
                     </div>
                 </section>
 
+                <!-- COMMUNITY VOTE CARD (FUTURE FEATURE) -->
                 <section class="card community-actions">
-                    <div class="action-header">
-                        <h2>🗳️ Community Vote (<span id="voteCountdown">02:00</span>)</h2>
-                        </div>
-
-                    <div class="vote-buttons">
-                        <button id="votePlay" class="ghost-btn" data-action="play">⚽️ Speel! (<span id="votesPlay">0</span>)</button>
-                        <button id="voteEnergy" class="ghost-btn" data-action="energy">🔋 Geef Energie! (<span id="votesEnergy">0</span>)</button>
-                        <button id="voteRest" class="ghost-btn" data-action="rest">😴 Laat Rusten! (<span id="votesRest">0</span>)</button>
+                    <div class="action-header flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">🗳️ Community Vote (<span id="voteCountdown">00:00</span>)</h2>
                     </div>
-                    <p id="voteMessage" style="color:var(--muted); font-size: 0.9em; margin-top: 10px;">
-                        Stem op de volgende actie. Je hebt nog niet gestemd in deze ronde.
+
+                    <div class="grid grid-cols-3 gap-3 mt-4">
+                        <button id="votePlay" class="ghost-btn" data-action="play">⚽️ Play! (<span id="votesPlay">0</span>)</button>
+                        <button id="voteEnergy" class="ghost-btn" data-action="energy">🔋 Give Energy! (<span id="votesEnergy">0</span>)</button>
+                        <button id="voteRest" class="ghost-btn" data-action="rest">😴 Rest! (<span id="votesRest">0</span>)</button>
+                    </div>
+                    <p id="voteMessage" class="text-gray-400 text-sm mt-3">
+                        Vote for the next AI action.
                     </p>
                 </section>
 
+                <!-- SURVIVAL METER CARD -->
                 <section class="card survival">
-                    <div class="surv-head">
-                        <h2>🫀 Survival Meter (Hourly)</h2>
-                        <div class="pair-info">
-                            Goal: <strong id="goalUsd">◎0.000</strong>
+                    <div class="surv-head flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold">🫀 Survival Meter (Hourly)</h2>
+                        <div class="pair-info text-right text-sm sm:text-base">
+                            Goal: <strong id="goalSol" class="text-primary">◎0.000</strong> SOL
                             <span class="sep">|</span>
-                            Last Hour: <strong id="lastUsd">◎0.000</strong>
+                            Last Hour: <strong id="lastSol" class="text-primary">◎0.000</strong> SOL
                         </div>
                     </div>
 
-                    <div class="progress-wrap jumbo">
-                        <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
-                        <div class="progress-label" id="progressLabel">50%</div>
+                    <div class="progress-wrap relative h-10 bg-[#333] rounded-xl overflow-hidden shadow-inner">
+                        <div id="progressFill" class="h-full bg-red-600 transition-all duration-500 ease-out" style="width: 50%;"></div>
+                        <div class="progress-label absolute inset-0 flex items-center justify-center text-white font-bold text-lg" id="progressLabel">50%</div>
                     </div>
 
-                    <div class="surv-meta">
-                        <p>
-                            Status: <strong id="survStatus">Tracking Market</strong>
-                            <span class="sep">|</span>
-                            Streak: <strong id="streak">0</strong>
-                            <span class="sep">|</span>
-                            Next Check: <strong id="countdown">00:00</strong>
-                        </p>
-                        <p>Hype Value: <strong id="hypeValue">50</strong>%</p>
-                        <p class="sub next">
-                            Next Goal on ✅: <strong id="nextPass">◎0.000</strong>
-                            <span class="sep">|</span>
-                            on ❌: <strong id="nextFail">◎0.000</strong>
-                        </p>
-                        <div id="streakBadge" class="streak-badge" hidden>🔥 Streak 1 — We are alive!</div>
+                    <div class="surv-meta mt-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                        <p class="col-span-2 md:col-span-1">Status: <strong id="survStatus">Tracking Market</strong></p>
+                        <p>Streak: <strong id="streak">0</strong></p>
+                        <p>Next Check: <strong id="countdown">00:00</strong></p>
+                        <p>Hype: <strong id="hypeValue">50</strong>%</p>
                     </div>
-                    <small>Survival data gesimuleerd voor demo. Echt volume komt later.</small>
-                </section>
-                
-                <section class="card hype">
-                    <h2>🚀 Hype Meter</h2>
-                    <div class="hype-bar"><div id="hype-fill" style="width: 50%;"></div></div>
+                    
+                    <div class="text-xs text-gray-500 mt-4 border-t border-gray-700 pt-3">
+                        <p>Next Goal on ✅: <strong id="nextPass" class="text-green-400">◎0.000</strong></p>
+                        <p>Next Goal on ❌: <strong id="nextFail" class="text-red-400">◎0.000</strong></p>
+                        <div id="streakBadge" class="streak-badge text-center mt-3 p-2 bg-green-900/50 border border-green-700 rounded-lg" hidden>🔥 Streak 1 — We are alive!</div>
+                    </div>
+                    <small class="block text-center text-gray-500 mt-2">Survival data simulated for demo. Real volume data to be integrated.</small>
                 </section>
 
+                <!-- CALL TO ACTION (BLINK) -->
                 <section class="card cta">
                     <div class="cta-row">
-                        <a id="ctaBtn" class="cta-btn" 
-                            href="https://ghostagotchi.onrender.com/api/actions/feed-ghost" 
+                        <!-- The href MUST point to the BLINK GET route -->
+                        <a id="ctaBtn" class="cta-btn block text-lg font-extrabold" 
+                            href="/api/actions/feed-ghost" 
                             target="_blank" 
-                            rel="noopener">🟧 Feed the Ghost (SOL Flow)</a>
-                        </div>
+                            rel="noopener">
+                            🟧 Feed the Ghost via SOL BLINK
+                        </a>
+                    </div>
+                    <p class="text-center text-xs text-gray-500 mt-2">
+                        Click the button to initiate a Solana transaction (BLINK) in your wallet.
+                    </p>
                 </section>
-
-                <div id="callout" class="card callout" hidden>
-                    <strong>👻 Ghost is hungry!</strong> We're below 50% goal.
-                    <a class="cta-btn inline" id="calloutTrade" href="#" target="_blank" rel="noopener">Feed now</a>
+                
+                <!-- ATTENTION CALLOUT -->
+                <div id="callout" class="card callout bg-red-900/40 border-red-500 p-4 text-center" hidden>
+                    <strong class="text-red-400 text-xl block">👻 Ghost is hungry and unhappy!</strong> Help the Ghostagotchi immediately!
+                    <a class="cta-btn inline-block mt-3 bg-red-500 hover:bg-red-400" id="calloutTrade" href="/api/actions/feed-ghost" target="_blank" rel="noopener">Feed Now via BLINK</a>
                 </div>
+
             </main>
 
-            <aside class="col-side">
-                <section class="card log">
-                    <div class="log-header"><h2>📒 Log</h2></div>
-                    <ul id="logList">
-                        <li>[SYSTEM] Ghostagotchi online. Start survival protocol.</li>
+            <!-- SIDEBAR: LOG -->
+            <aside class="col-side flex flex-col gap-6">
+                <section class="card log flex-grow">
+                    <div class="log-header mb-3">
+                        <h2 class="text-xl font-bold">📒 Activity Log</h2>
+                    </div>
+                    <ul id="logList" class="space-y-1 text-sm h-64 overflow-y-auto pr-2">
+                        <li>[SYSTEM] Ghostagotchi online. Initiating survival protocol.</li>
                     </ul>
                 </section>
-                <footer><small>Entertainment project; no financial promises. © Ghostagotchi</small></footer>
+                <footer class="text-center"><small class="text-gray-500">Entertainment project; no financial promises. © Ghostagotchi</small></footer>
             </aside>
             
         </div>
     </div>
     
+    <!-- Modals & Feedback UI -->
     <div id="confettiLayer"></div>
     <div id="toast" class="toast" aria-live="polite"></div>
-    <div id="chatBubble" class="bubble" hidden></div> 
+    <div id="chatBubble" class="bubble fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 bg-yellow-900/80 border border-yellow-500 rounded-xl shadow-2xl text-white z-30" hidden></div> 
     
+    <!-- Lore Modal -->
     <div class="card lore-modal" id="loreModal" hidden>
-        <h2>📖 Ghostagotchi Lore</h2>
-        <p>
-            Born from the blockchain shadows, Ghostagotchi drifts through
-            wallets and memes. Support, hype and love keep it alive.
+        <h2 class="text-3xl font-black mb-4">📖 Ghostagotchi Lore</h2>
+        <p class="text-gray-300">
+            Born from the blockchain shadows, Ghostagotchi drifts through 
+            wallets and memes. Community support, hype, and love 
+            via SOL volume keep the ghost alive and help it evolve.
         </p>
-        <button id="btn-lore-close" class="ghost-btn">Close</button>
+        <button id="btn-lore-close" class="ghost-btn mt-6">Close</button>
     </div>
 
+    <!-- Load the client-side logic -->
+    <!-- The client.js file will contain all the interactive and real-time logic. -->
     <script src="client.js"></script>
 </body>
 </html>
