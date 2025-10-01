@@ -64,7 +64,7 @@ body {
 /* hoofdgrid: content links, log rechts */
 .layout {
    display: grid;
-   grid-template-columns: 1fr 420px;
+   grid-template-columns: 1fr 420px; /* 1fr zorgt dat de content de resterende ruimte inneemt */
    gap: 18px;
 }
 
@@ -122,10 +122,12 @@ body {
 }
 
 .col-main {
+   **flex: 1;** /* Fix: Zorgt dat de kolom de beschikbare ruimte neemt */
    min-width: 0;
 }
 
 .col-side {
+   **width: 420px;** /* Fix: Zorgt dat de log de juiste vaste breedte behoudt */
    min-width: 0;
 }
 
@@ -147,7 +149,7 @@ body {
    align-items: center;
    gap: 20px;
    padding-block: 22px;
-   **position: relative;** /* <-- FIX 1: Om .bubble correct te ankeren */
+   **position: relative;** /* Fix: Anker voor de chat bubble */
 }
 
 /* groot spookkader */
@@ -557,7 +559,7 @@ progress::-webkit-progress-value {
 /* Chat bubble */
 .bubble {
    position: absolute;
-   **left: 440px;** /* <-- FIX 2: Aangepaste positie, werkt beter met 420px avatar */
+   left: 440px; /* Fix: Positie ten opzichte van .head container */
    top: 12px;
    max-width: 280px;
    background: #222336;
