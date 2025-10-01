@@ -144,6 +144,10 @@ body {
     backdrop-filter: blur(6px);
     margin-bottom: 18px;
 }
+/* Stijl voor de secties in de zijbalk die kaarten bevatten */
+.col-side .card {
+    padding: 16px; /* Iets minder padding in de zijbalk */
+}
 
 /* ===== HERO: spook boven de stats ===== */
 .head {
@@ -181,7 +185,6 @@ body {
 .avatar {
     width: 400px;
     image-rendering: pixelated;
-    /* De Broken Ghost Image fix zit in de client.js logica die de juiste sprite kiest */
     filter: drop-shadow(0 0 36px rgba(255, 255, 255, .48));
     animation: float 2.3s ease-in-out infinite;
 }
@@ -598,21 +601,21 @@ progress::-webkit-progress-value {
 }
 
 .vote-buttons button {
-    flex: 1 1 30%; /* Zorgt dat de 3 knoppen mooi verdeeld worden */
+    flex: 1 1 30%; 
     text-align: center;
     border: 1px solid #2a2a3a;
     transition: all 0.2s;
     font-size: 16px;
     font-weight: 700;
-    padding: 14px 10px; /* Meer padding om ze opvallend te maken */
+    padding: 14px 10px; 
 }
 
 /* Visuele feedback voor de STEM van de gebruiker (Anti-Chaos) */
 .vote-buttons button.voted-by-me {
-    border-color: var(--good); /* Groene rand als je gestemd hebt */
-    background: rgba(46, 204, 113, 0.1); /* Lichte groene achtergrond */
+    border-color: var(--good); 
+    background: rgba(46, 204, 113, 0.1); 
     box-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
-    cursor: default; /* Visueel feedback dat er niet meer geklikt kan worden */
+    cursor: default; 
 }
 
 .vote-buttons button:disabled {
@@ -629,6 +632,6 @@ progress::-webkit-progress-value {
         flex-direction: column;
     }
     .vote-buttons button {
-        flex: 1 1 100%; /* Knoppen nemen de volledige breedte */
+        flex: 1 1 100%; 
     }
 }
