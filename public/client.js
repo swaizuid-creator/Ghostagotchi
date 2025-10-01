@@ -22,7 +22,7 @@ const el = {
     // UI
     logList: document.getElementById('logList'),
     toast: document.getElementById('toast'),
-    chatBubble: document.getElementById('chatBubble'),
+    chatBubble: document.getElementById('chatBubble'), // Behoud voor toekomstige features
     voteMessage: document.getElementById('voteMessage'), 
 };
 
@@ -33,19 +33,20 @@ const el = {
 
 /** Speel een geluidseffect (simulatie) */
 function playSfx(filename) {
+    // Implementeer echte audio hier, nu is het een console log
     // console.log(`[SFX] Playing: ${filename}`); 
 }
 
 /** Stelt de sprite in */
 function setGhostImg(filename) {
     if (!el.ghostSprite) return;
-    // Gebruikt nu direct de 'assets/' map die in 'public/' staat.
+    // Zorgt ervoor dat het pad altijd vanaf de root ('/public/assets/') begint
     el.ghostSprite.src = `/assets/${filename}`; 
 }
 
 /**
  * Genereert de correcte bestandsnaam op basis van de stage en actie/mood.
- * FIXED: Volgt de conventie 'ghost_[fase]_[actie].png' (bijv. ghost_baby_play.png)
+ * 🐛 KRITIEKE FIX: Gebruikt kleine letters voor IDLE sprites (compatibel met Linux/Render).
  */
 function getSpriteFileName(stage, action, isMood = false) {
     // Normaliseer stage naam (bijv. 'Teenager' -> 'teen')
@@ -60,12 +61,11 @@ function getSpriteFileName(stage, action, isMood = false) {
         const commonActions = ['play', 'feed', 'sleep', 'rest', 'trick', 'clean', 'cure', 'gift', 'energy'];
         if (commonActions.includes(action.toLowerCase())) {
             
-            // GEFIXTE LOGICA: Volgt nu de conventie 'ghost_[fase]_[actie].png'
+            // Conventie: ghost_[fase]_[actie].png
             if (s === 'baby' || s === 'kid' || s === 'teen') {
-                // Vb: ghost_baby_play.png (zoals in jouw assets map)
                 return `ghost_${s}_${action}.png`;
             }
-            // Adult/Algemene Vb: ghost_feed.png
+            // Adult/Algemene: ghost_actie.png
             return `ghost_${action}.png`;
         }
     }
@@ -73,10 +73,10 @@ function getSpriteFileName(stage, action, isMood = false) {
     // 3. MOOD SPRITES (IDLE STATE: idle, sad, hungry, etc.)
     if (s === 'baby' || s === 'kid' || s === 'teen') {
         if (action === 'idle') {
-            // Vb: Baby_idle.png (Let op: moet exact matchen met de HOOFDLETTER in de map!)
-            return `${s.charAt(0).toUpperCase() + s.slice(1)}_idle.png`; 
+            // ✅ FIX: Gebruikt nu kleine letters voor de filename (baby_idle.png)
+            return `${s}_idle.png`; 
         }
-        // Vb: ghost_angry_teen.png
+        // Vb: ghost_teen_angry.png
         return `ghost_${s}_${action}.png`;
     }
 
@@ -135,6 +135,7 @@ function addLog(message, type = 'SYSTEM') {
     
     if (el.logList) {
         el.logList.prepend(li);
+        // Beperk de loglijst tot maximaal 20 items
         while (el.logList.children.length > 20) {
             el.logList.removeChild(el.logList.lastChild);
         }
@@ -192,6 +193,7 @@ function updatePetSim(){
     const ageElement = el.ghostAge;
     if(ageElement) {
         let currentAge = parseFloat(ageElement.textContent) || 0;
+        // Age verhoogt met 1/60 (uur per minuut)
         ageElement.textContent = (currentAge + 1 / 60).toFixed(2); 
     }
 
@@ -223,7 +225,7 @@ function updatePetSim(){
     // SLECHT: Honger
     else if (currentHunger < 30) {
         newMood = 'hungry'; newEmoji = '😟'; 
-        newSprite = getSpriteFileName(currentStage, 'feed', true); 
+        newSprite = getSpriteFileName(currentStage, 'feed', true); // Gebruik feed/hungry sprite
         if(el.attentionIcon) el.attentionIcon.hidden = false;
     } 
     // SLECHT: Moe
@@ -241,7 +243,7 @@ function updatePetSim(){
     // GOED: Speels/Blij
     else if (currentHappiness > 80 && currentEnergy > 50) {
         newMood = 'playful'; newEmoji = '🥳'; 
-        newSprite = getSpriteFileName(currentStage, 'play', true); 
+        newSprite = getSpriteFileName(currentStage, 'play', true); // Gebruik play sprite
         if(el.attentionIcon) el.attentionIcon.hidden = true;
     }
     // Neutraal/Goed: IDLE
@@ -266,12 +268,16 @@ function simulateAIAction() {
     
     let action = '';
 
+    // Prioriteit 1: Honger
     if (H < 30) {
         action = 'feed';
+    // Prioriteit 2: Energie
     } else if (E < 30) {
         action = 'rest';
+    // Prioriteit 3: Plezier
     } else if (P < 40) {
         action = 'play';
+    // WILLEKEURIGE ACTIE
     } else {
         const choices = ['play', 'feed', 'trick', 'clean'];
         action = choices[Math.floor(Math.random() * choices.length)];
@@ -345,6 +351,7 @@ function performAction(action, initiator = 'VOTE') {
     }
     
     // 3. Update Log
+    // Gebruikt de 'lastAction' ID die we in de HTML hebben behouden.
     el.lastAction.textContent = `${initiator}: ${action.toUpperCase()}`;
     if(initiator === 'VOTE') addLog(`Community koos: ${action.toUpperCase()}`, 'VOTE');
 }
@@ -397,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial call om de basis-mood in te stellen (Gebruikt de waarde uit de HTML: "Baby")
     updatePetSim(); 
     
-    // Start de simulatielus (elke 1 minuut)
+    // Start de stat-degradatie en mood-update lus (elke 1 minuut)
     setInterval(updatePetSim, 60000); 
 
     // Event Listeners voor de Community Votes
@@ -412,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toast('🎁 De Ghost is blij met je gift! (Stats +)');
     });
 
-    // Placeholder voor CTA's
+    // Placeholder voor CTA's (Share X en Boost Hype)
     document.getElementById('btn-share-x').addEventListener('click', (e) => {
         e.preventDefault();
         toast('Share on X is nog in ontwikkeling! 📢');

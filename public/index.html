@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Ghostagotchi – AI Survival</title>
     <link rel="stylesheet" href="style.css"/>
-    <script src="/socket.io/socket.io.js"></script>
-</head>
+    </head>
 <body>
     <div id="bg-decor"></div>
 
@@ -23,7 +22,7 @@
                 
                 <div class="controls">
                     <button id="muteBtn" class="mute">🔇 Sound Off</button>
-                    <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/>
+                    <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/> 
                 </div>
             </div>
         </header>
@@ -35,7 +34,7 @@
                 <section class="card head">
                     <div class="avatar-wrap">
                         <div class="avatar-glow"></div>
-                        <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/>
+                        <img id="ghostSprite" src="/assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/> 
                         <div id="attentionIcon" class="attention" title="Needs attention" hidden>⚠️</div>
                     </div>
                     <div class="head-right">
@@ -60,8 +59,7 @@
                 <section class="card community-actions">
                     <div class="action-header">
                         <h2>🗳️ Community Vote (<span id="voteCountdown">02:00</span>)</h2>
-                        <small id="lastVoteAction">Laatste actie: —</small>
-                    </div>
+                        </div>
 
                     <div class="vote-buttons">
                         <button id="votePlay" class="ghost-btn" data-action="play">⚽️ Speel! (<span id="votesPlay">0</span>)</button>
@@ -115,9 +113,9 @@
                 <section class="card cta">
                     <div class="cta-row">
                         <a id="ctaBtn" class="cta-btn" 
-                           href="https://ghostagotchi.onrender.com/api/actions/feed-ghost" 
-                           target="_blank" 
-                           rel="noopener">🟧 Feed the Ghost (SOL Flow)</a>
+                            href="https://ghostagotchi.onrender.com/api/actions/feed-ghost" 
+                            target="_blank" 
+                            rel="noopener">🟧 Feed the Ghost (SOL Flow)</a>
                         </div>
                 </section>
 
@@ -142,7 +140,7 @@
     
     <div id="confettiLayer"></div>
     <div id="toast" class="toast" aria-live="polite"></div>
-    <div id="chatBubble" class="bubble" hidden></div>
+    <div id="chatBubble" class="bubble" hidden></div> 
     
     <div class="card lore-modal" id="loreModal" hidden>
         <h2>📖 Ghostagotchi Lore</h2>

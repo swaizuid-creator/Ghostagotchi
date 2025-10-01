@@ -12,68 +12,65 @@ import {
     SystemProgram, 
     TransactionMessage, 
     VersionedTransaction, 
-    clusterApiUrl, // <-- NIEUWE IMPORT voor betrouwbare RPC
+    clusterApiUrl, 
 } from "@solana/web3.js";
 
-// Het Solana-adres van de Ghostagotchi waar de SOL naartoe gaat
+// The Solana wallet address for the Ghostagotchi where the SOL will be sent
 const GHOST_WALLET_ADDRESS = "3a9PFxBxZU7kB8Sd95gud361t9LecuB54a1VrZjR6JnD"; 
-// Gebruik een betrouwbare, publieke Mainnet-RPC.
-const connection = new Connection(clusterApiUrl('mainnet-beta')); 
+// Use a reliable, public Mainnet-RPC with explicit 'confirmed' commitment
+const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed'); 
 
-// Standaard headers voor BLINKS
+// Standard headers for BLINKS
 const HEADERS = {
     ...ACTIONS_CORS_HEADERS,
-    // FIX 1: Gebruik de stringwaarde in plaats van de objectproperty,
-    // of gebruik een meer algemene aanpak. BLOCKCHAIN_IDS.Solana is correct,
-    // maar vaak is het robuuster om de standaard 'solana' te gebruiken als string,
-    // of de exacte waarde van de 'mainnet' property uit BLOCKCHAIN_IDS te halen als je deze gebruikt.
-    // Ik gebruik hier 'solana' wat de standaard is voor alle Solana BLINKS.
-    "x-blockchain-ids": "solana", 
+    // FIX: Replaced BLOCKCHAIN_IDS.Solana with the simple string 'solana' 
+    // to resolve the TypeScript error 'Property 'Solana' does not exist'.
+    "x-blockchain-ids": 'solana', 
     "x-action-version": "2.4",
 };
 
 // =================================================================
-// 1. OPTIONS Endpoint (Vereist voor CORS)
+// 1. OPTIONS Endpoint (Required for CORS)
 // =================================================================
 export const OPTIONS = async () => {
     return new Response(null, { headers: HEADERS });
 };
 
 // =================================================================
-// 2. GET Endpoint (Toont de BLINK UI metadata en knoppen)
+// 2. GET Endpoint (Displays the BLINK UI metadata and buttons)
 // =================================================================
 export const GET = async (req: Request) => {
-    // Haal de basis-URL op om de asset-links correct op te bouwen
+    // Get the base URL to correctly construct asset links
     const baseUrl = new URL("/", req.url).toString(); 
 
     const response: ActionGetResponse = {
         type: "action",
-        // Gebruik de absolute URL voor het icoon
+        // Use the absolute URL for the icon (assuming 'ghost_feed.png' is in 'public/')
         icon: `${baseUrl}ghost_feed.png`, 
         label: "Feed Ghost",
-        title: "👻 Voed de Ghostagotchi (SOL)",
-        description: "Steun de Ghostagotchi door SOL te sturen. Voeding is essentieel voor zijn groei!",
+        title: "👻 Feed the Ghostagotchi (SOL)",
+        description: "Support the Ghostagotchi by sending SOL. Nutrition is essential for its growth!",
         links: {
             actions: [
                 {
                     type: "transaction",
-                    label: "Klein hapje (0.01 SOL)",
+                    label: "Small Snack (0.01 SOL)",
                     href: `/api/actions/feed-ghost?amount=0.01`,
                 },
                 {
                     type: "transaction",
-                    label: "Midden maaltijd (0.05 SOL)",
+                    label: "Mid-sized Meal (0.05 SOL)",
                     href: `/api/actions/feed-ghost?amount=0.05`,
                 },
                 {
-                    // Met custom invoerveld
+                    // With custom input field
                     type: "transaction",
                     href: `/api/actions/feed-ghost?amount={amount}`,
-                    label: "Aangepast bedrag",
+                    label: "Custom Amount",
                     parameters: [
                         {
                             name: "amount",
-                            label: "SOL bedrag",
+                            label: "SOL Amount",
                             type: "number",
                         },
                     ],
@@ -86,30 +83,38 @@ export const GET = async (req: Request) => {
 };
 
 // =================================================================
-// 3. POST Endpoint (Maakt de transactie aan)
+// 3. POST Endpoint (Creates the transaction)
 // =================================================================
 export const POST = async (req: Request) => {
     try {
-        // Stap 1: Gegevens extraheren
+        // Step 1: Extract data
         const url = new URL(req.url);
-        // Zorg ervoor dat de bedrag-parameter van zowel de GET-URL als de POST-body wordt geaccepteerd.
-        // In een BLINK wordt het 'amount' parameter meestal uit de query (GET) gehaald.
+        // Get the 'amount' from the query parameters
         const amount = Number(url.searchParams.get("amount")); 
         
-        // De request body bevat het account van de betaler
+        // The request body contains the payer's account
         const request: ActionPostRequest = await req.json();
+
+        // Check for missing account before proceeding
+        if (!request.account) {
+             return new Response(JSON.stringify({ 
+                 message: "Payer account missing in transaction request.", 
+                 error: "PayerAccountMissing",
+             }), { status: 400, headers: HEADERS });
+        }
+
         const payer = new PublicKey(request.account);
         const receiver = new PublicKey(GHOST_WALLET_ADDRESS);
 
         if (amount <= 0 || isNaN(amount)) {
-             // Geef een gestructureerde foutreactie terug (optioneel, maar goede gewoonte)
+             // Return a structured error response
              return new Response(JSON.stringify({ 
-                message: "Voer een geldig bedrag in.", 
-                error: "InvalidAmount",
+                 message: "Please enter a valid amount.", 
+                 error: "InvalidAmount",
              }), { status: 400, headers: HEADERS });
         }
         
-        // Stap 2: Transactie voorbereiden
+        // Step 2: Prepare the transaction
         const transaction = await prepareTransferTransaction(
             connection,
             payer,
@@ -117,27 +122,26 @@ export const POST = async (req: Request) => {
             amount
         );
 
-        // Stap 3: Geef de geserialiseerde transactie terug
-        // FIX 2: De ActionPostResponse VEREIST de type: 'transaction' property
+        // Step 3: Return the serialized transaction
         const response: ActionPostResponse = { 
-            type: 'transaction', // <--- KRITIEKE TOEVOEGING
+            type: 'transaction', 
             transaction: Buffer.from(transaction.serialize()).toString("base64"),
-            message: `Je hebt de Ghost gevoed met ${amount} SOL! Dankjewel! 💖`, // Optioneel bericht na transactie
+            message: `You fed the Ghost with ${amount} SOL! Thank you! 💖`, // Optional message after transaction
         };
 
         return Response.json(response, { status: 200, headers: HEADERS });
     } catch (error) {
-        console.error("Fout bij verwerken BLINK POST request:", error);
-        // Geef een gestructureerde foutreactie terug
+        console.error("Error processing BLINK POST request:", error);
+        // Return a structured error response
         return new Response(JSON.stringify({ 
-            message: "Interne serverfout bij aanmaken transactie.", 
+            message: "Internal server error while creating transaction.", 
             error: "InternalServerError",
         }), { status: 500, headers: HEADERS });
     }
 };
 
 // =================================================================
-// 4. Helper Functie (Creëert de Versioned Transaction)
+// 4. Helper Function (Creates the Versioned Transaction)
 // =================================================================
 const prepareTransferTransaction = async (
     connection: Connection,
@@ -145,17 +149,17 @@ const prepareTransferTransaction = async (
     receiver: PublicKey,
     amount: number
 ) => {
-    // 1. Maak de instructie aan: SOL overdracht
+    // 1. Create the instruction: SOL transfer
     const instruction = SystemProgram.transfer({
         fromPubkey: payer,
         toPubkey: receiver,
-        lamports: amount * LAMPORTS_PER_SOL, // Converteer SOL naar Lamports
+        lamports: amount * LAMPORTS_PER_SOL, // Convert SOL to Lamports
     });
 
-    // 2. Haal recente blockhash op (met correcte finaliteit)
+    // 2. Fetch recent blockhash (with 'finalized' commitment)
     const { blockhash } = await connection.getLatestBlockhash({ commitment: 'finalized' });
 
-    // 3. Bouw en compileer de transactie
+    // 3. Build and compile the transaction
     const message = new TransactionMessage({
         payerKey: payer,
         recentBlockhash: blockhash,
