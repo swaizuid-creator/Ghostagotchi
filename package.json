@@ -6,8 +6,12 @@
   "scripts": {
     "start": "node server.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "@solana/actions": "^1.6.6",
+    "@solana/web3.js": "^1.98.4",
     "express": "^4.18.2",
     "socket.io": "^4.7.5"
   }

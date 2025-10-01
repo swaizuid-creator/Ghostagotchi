@@ -12,16 +12,23 @@ import {
     SystemProgram, 
     TransactionMessage, 
     VersionedTransaction, 
+    clusterApiUrl, // <-- NIEUWE IMPORT voor betrouwbare RPC
 } from "@solana/web3.js";
 
 // Het Solana-adres van de Ghostagotchi waar de SOL naartoe gaat
 const GHOST_WALLET_ADDRESS = "3a9PFxBxZU7kB8Sd95gud361t9LecuB54a1VrZjR6JnD"; 
-const connection = new Connection("https://api.mainnet-beta.solana.com"); // Gebruik Mainnet RPC of een Devnet/Testnet RPC voor testen
+// Gebruik een betrouwbare, publieke Mainnet-RPC.
+const connection = new Connection(clusterApiUrl('mainnet-beta')); 
 
 // Standaard headers voor BLINKS
 const HEADERS = {
     ...ACTIONS_CORS_HEADERS,
-    "x-blockchain-ids": BLOCKCHAIN_IDS.SolanaMainnet, // Gebruik SolanaMainnet of SolanaDevnet
+    // FIX 1: Gebruik de stringwaarde in plaats van de objectproperty,
+    // of gebruik een meer algemene aanpak. BLOCKCHAIN_IDS.Solana is correct,
+    // maar vaak is het robuuster om de standaard 'solana' te gebruiken als string,
+    // of de exacte waarde van de 'mainnet' property uit BLOCKCHAIN_IDS te halen als je deze gebruikt.
+    // Ik gebruik hier 'solana' wat de standaard is voor alle Solana BLINKS.
+    "x-blockchain-ids": "solana", 
     "x-action-version": "2.4",
 };
 
@@ -36,10 +43,13 @@ export const OPTIONS = async () => {
 // 2. GET Endpoint (Toont de BLINK UI metadata en knoppen)
 // =================================================================
 export const GET = async (req: Request) => {
+    // Haal de basis-URL op om de asset-links correct op te bouwen
+    const baseUrl = new URL("/", req.url).toString(); 
+
     const response: ActionGetResponse = {
         type: "action",
-        // Gebruik de URL van uw gehoste sprite als icon (pas deze aan!)
-        icon: `${new URL("/ghost_feed.png", req.url).toString()}`,
+        // Gebruik de absolute URL voor het icoon
+        icon: `${baseUrl}ghost_feed.png`, 
         label: "Feed Ghost",
         title: "👻 Voed de Ghostagotchi (SOL)",
         description: "Steun de Ghostagotchi door SOL te sturen. Voeding is essentieel voor zijn groei!",
@@ -82,13 +92,21 @@ export const POST = async (req: Request) => {
     try {
         // Stap 1: Gegevens extraheren
         const url = new URL(req.url);
-        const amount = Number(url.searchParams.get("amount"));
+        // Zorg ervoor dat de bedrag-parameter van zowel de GET-URL als de POST-body wordt geaccepteerd.
+        // In een BLINK wordt het 'amount' parameter meestal uit de query (GET) gehaald.
+        const amount = Number(url.searchParams.get("amount")); 
+        
+        // De request body bevat het account van de betaler
         const request: ActionPostRequest = await req.json();
         const payer = new PublicKey(request.account);
         const receiver = new PublicKey(GHOST_WALLET_ADDRESS);
 
         if (amount <= 0 || isNaN(amount)) {
-             return new Response(JSON.stringify({ message: "Voer een geldig bedrag in." }), { status: 400, headers: HEADERS });
+             // Geef een gestructureerde foutreactie terug (optioneel, maar goede gewoonte)
+             return new Response(JSON.stringify({ 
+                message: "Voer een geldig bedrag in.", 
+                error: "InvalidAmount",
+             }), { status: 400, headers: HEADERS });
         }
         
         // Stap 2: Transactie voorbereiden
@@ -100,7 +118,9 @@ export const POST = async (req: Request) => {
         );
 
         // Stap 3: Geef de geserialiseerde transactie terug
-        const response: ActionPostResponse = {
+        // FIX 2: De ActionPostResponse VEREIST de type: 'transaction' property
+        const response: ActionPostResponse = { 
+            type: 'transaction', // <--- KRITIEKE TOEVOEGING
             transaction: Buffer.from(transaction.serialize()).toString("base64"),
             message: `Je hebt de Ghost gevoed met ${amount} SOL! Dankjewel! 💖`, // Optioneel bericht na transactie
         };
@@ -108,7 +128,11 @@ export const POST = async (req: Request) => {
         return Response.json(response, { status: 200, headers: HEADERS });
     } catch (error) {
         console.error("Fout bij verwerken BLINK POST request:", error);
-        return new Response(JSON.stringify({ error: "Interne serverfout bij aanmaken transactie." }), { status: 500, headers: HEADERS });
+        // Geef een gestructureerde foutreactie terug
+        return new Response(JSON.stringify({ 
+            message: "Interne serverfout bij aanmaken transactie.", 
+            error: "InternalServerError",
+        }), { status: 500, headers: HEADERS });
     }
 };
 
@@ -128,8 +152,8 @@ const prepareTransferTransaction = async (
         lamports: amount * LAMPORTS_PER_SOL, // Converteer SOL naar Lamports
     });
 
-    // 2. Haal recente blockhash op
-    const { blockhash } = await connection.getLatestBlockhash();
+    // 2. Haal recente blockhash op (met correcte finaliteit)
+    const { blockhash } = await connection.getLatestBlockhash({ commitment: 'finalized' });
 
     // 3. Bouw en compileer de transactie
     const message = new TransactionMessage({
