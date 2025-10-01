@@ -1,144 +1,141 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Ghostagotchi – AI Survival</title>
-    <link rel="stylesheet" href="style.css"/>
-    <script src="/socket.io/socket.io.js"></script>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Ghostagotchi – AI Survival</title>
+    <link rel="stylesheet" href="style.css"/>
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <div id="bg-decor"></div>
+    <div id="bg-decor"></div>
 
-    <div class="wrap layout">
-        <header class="topbar">
-            <h1>👻 Ghostagotchi – AI Survival</h1>
-            <div class="controls">
-                <button id="muteBtn" class="mute">🔇 Geluid uit</button>
-                <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/>
-            </div>
-        </header>
-        <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via <strong>SOL</strong> volume.</p>
+    <div class="wrap layout">
+        <header class="topbar">
+            <h1>👻 Ghostagotchi – AI Survival</h1>
+            <div class="header-actions">
+                <button id="btn-hype" class="ghost-btn">🚀 Boost Hype</button>
+                <button id="btn-gift" class="ghost-btn">💎 Gift Ghost</button>
+                <button id="btn-lore" class="ghost-btn">📖 Lore</button>
+                
+                <div class="controls">
+                    <button id="muteBtn" class="mute">🔇 Sound Off</button>
+                    <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/>
+                </div>
+            </div>
+        </header>
+        <p class="sub">AI-driven Halloween Tamagotchi. The community "feeds" it via <strong>SOL</strong> volume.</p>
 
-        <main class="col-main">
-            <section class="card head">
-                <div class="head-left">
-                    <div class="avatar-wrap">
-                        <div class="avatar-glow"></div>
-                        <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/>
-                        <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
-                    </div>
-                </div>
-                <div class="head-right">
-                    <div class="row">
-                        <div>Naam: <strong id="name">Ghostagotchi</strong></div>
-                        <div>Stemming:
-                            <strong id="mood">cheerful</strong>
-                            <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span>
-                        </div>
-                    </div>
-                    <div class="bars three">
-                        <label>🍗 Honger</label><progress id="hunger" max="100" value="25"></progress>
-                        <label>⚡ Energie</label><progress id="energy" max="100" value="80"></progress>
-                        <label>😊 Blijdschap</label><progress id="happiness" max="100" value="70"></progress>
-                    </div>
-                    <div class="last">Laatste actie: <span id="lastAction">—</span></div>
-                </div>
-            </section>
+        <main class="col-main">
+            <section class="card head">
+                <div class="head-left">
+                    <div class="avatar-wrap">
+                        <div class="avatar-glow"></div>
+                        <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/>
+                        <div id="attentionIcon" class="attention" title="Needs attention" hidden>⚠️</div>
+                    </div>
+                </div>
+                <div class="head-right">
+                    <div class="row">
+                        <div>Name: <strong id="name">Ghostagotchi</strong></div>
+                        <div>Mood: <strong id="mood">cheerful</strong> <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span> </div>
+                    </div>
+                    <div class="bars three">
+                        <label>🍗 Hunger</label><progress id="hunger" max="100" value="25"></progress>
+                        <label>⚡ Energy</label><progress id="energy" max="100" value="80"></progress>
+                        <label>😊 Happiness</label><progress id="happiness" max="100" value="70"></progress>
+                    </div>
+                    <div class="last">Last Action: <span id="lastAction">—</span></div>
+                    
+                                        <div class="last" style="margin-top: 8px;">
+                        Stage: <strong id="ghostStage">—</strong> 
+                        <span class="sep">|</span> 
+                        Age: <span id="ghostAge">—</span> hours
+                    </div>
+                    
+                </div>
+            </section>
 
-            <section class="card survival">
-                <div class="surv-head">
-                    <h2>🫀 Survival-meter (per uur)</h2>
-                    <div class="pair-info">
-                        Doel: <strong id="goalUsd">◎0.000</strong>
-                        <span class="sep">|</span>
-                        Laatste uur: <strong id="lastUsd">◎0.000</strong>
-                    </div>
-                </div>
+            <section class="card survival">
+                <div class="surv-head">
+                    <h2>🫀 Survival Meter (Hourly)</h2>
+                    <div class="pair-info">
+                        Goal: <strong id="goalUsd">◎0.000</strong>
+                        <span class="sep">|</span>
+                        Last Hour: <strong id="lastUsd">◎0.000</strong>
+                    </div>
+                </div>
 
-                <div class="progress-wrap jumbo">
-                    <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
-                    <div class="progress-label" id="progressLabel">0%</div>
-                </div>
+                <div class="progress-wrap jumbo">
+                    <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
+                    <div class="progress-label" id="progressLabel">0%</div>
+                </div>
 
-                <div class="surv-meta">
-                    <p>
-                        Status: <strong id="survStatus">—</strong>
-                        <span class="sep">|</span>
-                        Streak: <strong id="streak">0</strong>
-                        <span class="sep">|</span>
-                        Volgende check: <strong id="countdown">--:--</strong>
-                    </p>
-                    <p>Hype-waarde: <strong id="hypeValue">0</strong>%</p> 
-                    <p class="sub next">
-                        Volgend doel bij ✅: <strong id="nextPass">◎0.000</strong>
-                        <span class="sep">|</span>
-                        bij ❌: <strong id="nextFail">◎0.000</strong>
-                    </p>
+                <div class="surv-meta">
+                    <p>
+                        Status: <strong id="survStatus">—</strong>
+                        <span class="sep">|</span>
+                        Streak: <strong id="streak">0</strong>
+                        <span class="sep">|</span>
+                        Next Check: <strong id="countdown">--:--</strong>
+                    </p>
+                    <p>Hype Value: <strong id="hypeValue">0</strong>%</p>
+                    <p class="sub next">
+                        Next Goal on ✅: <strong id="nextPass">◎0.000</strong>
+                        <span class="sep">|</span>
+                        on ❌: <strong id="nextFail">◎0.000</strong>
+                    </p>
 
-                    <div id="streakBadge" class="streak-badge" hidden>🔥 Streak 1 — we’re alive!</div>
-                </div>
-                <small>Zonder DEX-pair draait demo-volume (voor test).</small>
-            </section>
-            
-            <section class="card hype">
-                <h2>🚀 Hype Meter</h2>
-                <div class="hype-bar"><div id="hype-fill"></div></div>
-            </section>
+                    <div id="streakBadge" class="streak-badge" hidden>🔥 Streak 1 — We are alive!</div>
+                </div>
+                <small>Running in Demo mode without DEX-pair (for testing).</small>
+            </section>
+            
+            <section class="card hype">
+                <h2>🚀 Hype Meter</h2>
+                <div class="hype-bar"><div id="hype-fill"></div></div>
+            </section>
 
-            <section class="card routine-timeline">
-                <h2>⏱️ AI Routine / Timeline</h2>
-                <ul id="timeline"></ul>
-            </section>
-            
-            <section class="card community-actions">
-                <h2>Gemeenschapsacties</h2>
-                <button id="btn-hype">🚀 Boost Hype</button>
-                <button id="btn-gift">💎 Gift Ghost</button>
-                <button id="btn-lore">📖 Read Lore</button>
-            </section>
+            <section class="card cta">
+                <div class="cta-row">
+                    <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost</a>
+                    <button id="copyLink" class="ghost-btn">Copy Link</button>
+                    <button id="toggleQR" class="ghost-btn">Show QR</button>
+                </div>
+                <div id="qrBox" class="qr" hidden>
+                    <img id="qrImg" alt="QR code for trade link">
+                </div>
+            </section>
 
-            <section class="card cta">
-                <div class="cta-row">
-                    <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost</a>
-                    <button id="copyLink" class="ghost-btn">Kopieer link</button>
-                    <button id="toggleQR" class="ghost-btn">QR tonen</button>
-                </div>
-                <div id="qrBox" class="qr" hidden>
-                    <img id="qrImg" alt="QR naar trade link">
-                </div>
-            </section>
+            <div id="callout" class="card callout" hidden>
+                <strong>👻 Ghost is hungry!</strong> We're below 50% goal.
+                <a class="cta-btn inline" id="calloutTrade" href="#" target="_blank" rel="noopener">Feed now</a>
+            </div>
+        </main>
 
-            <div id="callout" class="card callout" hidden>
-                <strong>👻 Ghost is hungry!</strong> We zitten onder 50%.
-                <a class="cta-btn inline" id="calloutTrade" href="#" target="_blank" rel="noopener">Feed now</a>
-            </div>
-            
-            <div class="card lore-modal" id="loreModal" hidden>
-                <h2>📖 Ghostagotchi Lore</h2>
-                <p>
-                    Born from the blockchain shadows, Ghostagotchi drifts through
-                    wallets and memes. Support, hype and love keep it alive.<br/><br/>
-                    Replace this with your whitepaper or community lore.
-                </p>
-                <button id="btn-lore-close">Sluiten</button>
-            </div>
-            
-        </main>
+        <aside class="col-side">
+            <section class="card log">
+                <div class="log-header"><h2>📒 Log</h2></div>
+                <ul id="logList"></ul>
+            </section>
+            <footer><small>Entertainment project; no financial promises. © Ghostagotchi</small></footer>
+        </aside>
+    </div>
 
-        <aside class="col-side">
-            <section class="card log">
-                <div class="log-header"><h2>📒 Log</h2></div>
-                <ul id="logList"></ul>
-            </section>
-            <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
-        </aside>
-    </div>
+    <div id="confettiLayer"></div>
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <div id="chatBubble" class="bubble" hidden></div>
+    
+    <div class="card lore-modal" id="loreModal" hidden>
+        <h2>📖 Ghostagotchi Lore</h2>
+        <p>
+            Born from the blockchain shadows, Ghostagotchi drifts through
+            wallets and memes. Support, hype and love keep it alive.<br/><br/>
+            Replace this with your whitepaper or community lore.
+        </p>
+        <button id="btn-lore-close" class="ghost-btn">Close</button>
+    </div>
 
-    <div id="confettiLayer"></div>
-    <div id="toast" class="toast" aria-live="polite"></div>
-    <div id="chatBubble" class="bubble" hidden></div>
-
-    <script src="client.js"></script>
+    <script src="client.js"></script>
 </body>
 </html>
