@@ -17,7 +17,7 @@ const el = {
   attentionIcon: document.getElementById('attentionIcon'),
 
   // Survival
-  goal: document.getElementById('goalUsd'),   // id blijven hergebruiken, nu SOL
+  goal: document.getElementById('goalUsd'),
   last: document.getElementById('lastUsd'),
   nextPass: document.getElementById('nextPass'),
   nextFail: document.getElementById('nextFail'),
@@ -133,7 +133,6 @@ function moodEmoji(mood){
   if (m.includes('sick') || m.includes('sad')) return '😵';
   return '🙂';
 }
-// Smooth animatie voor <progress>
 function animateProgress(elm, to, duration=400){
   const from = Number(elm.value)||0;
   const start = performance.now();
@@ -145,7 +144,6 @@ function animateProgress(elm, to, duration=400){
   }
   requestAnimationFrame(step);
 }
-// Logregels → icoontjes
 function decorateLog(text){
   const map = [
     {k:'AI: feed',     r:'🍗  AI: feed'},
@@ -237,7 +235,6 @@ socket.on('state', (s)=>{
   el.progressFill.style.width = pct + '%';
   el.progressLabel.textContent = pct + '%';
 
-  // Glow/pulse + callout
   if (pct >= 80 && pct < 90)  { el.progressBar.classList.add('glow'); el.progressBar.classList.remove('pulse','pulse-fast'); }
   else if (pct >= 90 && pct < 100) { el.progressBar.classList.add('glow','pulse-fast'); el.progressBar.classList.remove('pulse'); }
   else if (pct === 100)       { el.progressBar.classList.add('glow'); el.progressBar.classList.remove('pulse','pulse-fast'); }

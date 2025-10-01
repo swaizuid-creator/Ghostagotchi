@@ -8,115 +8,10 @@
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-  <div class="wrap">
-
-    <!-- HEADER -->
-    <header class="topbar">
-      <h1>👻 Ghostagotchi – AI Survival</h1>
-      <div class="controls">
-        <button id="muteBtn" class="mute">🔇 Geluid uit</button>
-        <input id="vol" type="range" min="0" max="100" value="40" title="SFX-volume"/>
-      </div>
-    </header>
-    <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via volume (SOL).</p>
-
-    <!-- PET PANEL -->
-    <section class="card pet">
-      <div class="pet-visual">
-        <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi"/>
-        <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
-      </div>
-
-      <div class="stats">
-        <div>Naam: <strong id="name">Ghostagotchi</strong></div>
-        <div>Stemming:
-          <strong id="mood">cheerful</strong>
-          <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span>
-        </div>
-        <div class="bars">
-          <label>Honger</label><progress id="hunger" max="100" value="25"></progress>
-          <label>Energie</label><progress id="energy" max="100" value="80"></progress>
-          <label>Blijdschap</label><progress id="happiness" max="100" value="70"></progress>
-        </div>
-        <div class="last">Laatste actie: <span id="lastAction">—</span></div>
-      </div>
-    </section>
-
-    <!-- SURVIVAL PANEL -->
-    <section class="card">
-      <h2>🫀 Survival-meter (per uur)</h2>
-      <p>Doel: <strong id="goalUsd">◎0.000</strong> &nbsp;|&nbsp; Laatste uur: <strong id="lastUsd">◎0.000</strong></p>
-
-      <div class="progress-wrap">
-        <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
-        <div class="progress-label" id="progressLabel">0%</div>
-      </div>
-
-      <p>
-        Status: <strong id="survStatus">—</strong> |
-        Streak: <strong id="streak">0</strong> |
-        Volgende check: <strong id="countdown">--:--</strong>
-      </p>
-
-      <p>Hype-meter: <strong id="hype">–</strong></p>
-
-      <!-- NIEUW: Next goal preview -->
-      <p class="sub">
-        Volgend doel bij ✅: <strong id="nextPass">◎0.000</strong> &nbsp;|&nbsp;
-        bij ❌: <strong id="nextFail">◎0.000</strong>
-      </p>
-
-      <small>Zonder DEX-pair draait demo-volume (voor test).</small>
-    </section>
-
-    <!-- CTA + QR -->
-    <section class="card cta">
-      <div class="cta-row">
-        <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost</a>
-        <button id="copyLink" class="ghost-btn">Kopieer link</button>
-        <button id="toggleQR" class="ghost-btn">QR tonen</button>
-      </div>
-      <div id="qrBox" class="qr" hidden>
-        <img id="qrImg" alt="QR naar trade link">
-      </div>
-    </section>
-
-    <!-- AUTO CALLOUT BIJ LAAG PROGRESS -->
-    <div id="callout" class="card callout" hidden>
-      <strong>👻 Ghost is hungry!</strong> We zitten onder 50%.
-      <a class="cta-btn inline" id="calloutTrade" href="#" target="_blank" rel="noopener">Feed now</a>
-    </div>
-
-    <!-- LOG -->
-    <section class="card log">
-      <h2>📜 Log</h2>
-      <ul id="logList"></ul>
-    </section>
-
-    <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
-  </div>
-
-  <!-- Overlays -->
-  <div id="confettiLayer"></div>
-  <div id="toast" class="toast" aria-live="polite"></div>
-  <div id="chatBubble" class="bubble" hidden></div>
-
-  <script src="client.js"></script>
-</body>
-</html><!doctype html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Ghostagotchi – AI Survival</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="/socket.io/socket.io.js"></script>
-</head>
-<body>
   <div id="bg-decor"></div>
 
   <div class="wrap layout">
-    <!-- ====== HEADER ====== -->
+    <!-- ===== Header ===== -->
     <header class="topbar">
       <h1>👻 Ghostagotchi – AI Survival</h1>
       <div class="controls">
@@ -126,29 +21,31 @@
     </header>
     <p class="sub">AI-gestuurde Halloween Tamagotchi. De community “voedt” via <strong>SOL</strong> volume.</p>
 
-    <!-- ====== MAIN COLUMN ====== -->
+    <!-- ===== Linkerkolom: Hero + Survival + CTA ===== -->
     <main class="col-main">
-      <!-- HERO: Ghost prominent -->
-      <section class="card hero">
-        <div class="hero-ghost">
-          <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi"/>
-          <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
-          <div id="chatBubble" class="bubble" hidden></div>
+      <!-- HERO -->
+      <section class="card head">
+        <div class="head-left">
+          <div class="avatar-wrap">
+            <img id="ghostSprite" src="assets/ghost_idle.png" alt="Ghostagotchi" class="avatar"/>
+            <div id="attentionIcon" class="attention" title="Heeft aandacht nodig" hidden>⚠️</div>
+          </div>
         </div>
-
-        <div class="hero-stats">
-          <div class="name-row">
+        <div class="head-right">
+          <div class="row">
             <div>Naam: <strong id="name">Ghostagotchi</strong></div>
             <div>Stemming:
               <strong id="mood">cheerful</strong>
               <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span>
             </div>
           </div>
-          <div class="bars">
+
+          <div class="bars three">
             <label>🍗 Honger</label><progress id="hunger" max="100" value="25"></progress>
             <label>⚡ Energie</label><progress id="energy" max="100" value="80"></progress>
             <label>😊 Blijdschap</label><progress id="happiness" max="100" value="70"></progress>
           </div>
+
           <div class="last">Laatste actie: <span id="lastAction">—</span></div>
         </div>
       </section>
@@ -187,7 +84,7 @@
         <small>Zonder DEX-pair draait demo-volume (voor test).</small>
       </section>
 
-      <!-- CTA + QR -->
+      <!-- CTA -->
       <section class="card cta">
         <div class="cta-row">
           <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost</a>
@@ -199,17 +96,19 @@
         </div>
       </section>
 
-      <!-- AUTO CALLOUT BIJ LAAG PROGRESS -->
+      <!-- LOW PROGRESS CALLOUT -->
       <div id="callout" class="card callout" hidden>
         <strong>👻 Ghost is hungry!</strong> We zitten onder 50%.
         <a class="cta-btn inline" id="calloutTrade" href="#" target="_blank" rel="noopener">Feed now</a>
       </div>
     </main>
 
-    <!-- ====== SIDEBAR: LOG ====== -->
+    <!-- ===== Rechterkolom: Log ===== -->
     <aside class="col-side">
       <section class="card log">
-        <h2>📜 Log</h2>
+        <div class="log-header">
+          <h2>📒 Log</h2>
+        </div>
         <ul id="logList"></ul>
       </section>
       <footer><small>Entertainmentproject; geen financiële beloften. © Ghostagotchi</small></footer>
@@ -219,8 +118,8 @@
   <!-- Overlays -->
   <div id="confettiLayer"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
+  <div id="chatBubble" class="bubble" hidden></div>
 
   <script src="client.js"></script>
 </body>
 </html>
-
