@@ -15,8 +15,6 @@
         <header class="topbar">
             <h1>👻 Ghostagotchi – AI Survival</h1>
             <div class="header-actions">
-                <button id="btn-hype" class="ghost-btn">🚀 Boost Hype</button>
-                <button id="btn-gift" class="ghost-btn">💎 Gift Ghost</button>
                 <button id="btn-lore" class="ghost-btn">📖 Lore</button>
                 
                 <div class="controls">
@@ -42,7 +40,7 @@
                             <div>Mood: <strong id="mood">cheerful</strong> <span id="moodEmoji" class="memoji" aria-hidden="true">🙂</span> </div>
                         </div>
                         <div class="bars three">
-                            <label>🍗 Hunger</label><progress id="hunger" max="100" value="25"></progress>
+                            <label>🍗 Hunger</label><progress id="hunger" max="100" value="75"></progress>
                             <label>⚡ Energy</label><progress id="energy" max="100" value="80"></progress>
                             <label>😊 Happiness</label><progress id="happiness" max="100" value="70"></progress>
                         </div>
@@ -50,9 +48,25 @@
                         <div class="last" style="margin-top: 8px;">
                             Stage: <strong id="ghostStage">—</strong> 
                             <span class="sep">|</span> 
-                            Age: <span id="ghostAge">—</span> hours
+                            Age: <span id="ghostAge">0.00</span> hours
                         </div>
                     </div>
+                </section>
+
+                <section class="card community-actions">
+                    <div class="action-header">
+                        <h2>🗳️ Community Vote (<span id="voteCountdown">02:00</span>)</h2>
+                        <small id="lastVoteAction">Laatste actie: —</small>
+                    </div>
+
+                    <div class="vote-buttons">
+                        <button id="votePlay" class="ghost-btn" data-action="play">⚽️ Speel! (<span id="votesPlay">0</span>)</button>
+                        <button id="voteEnergy" class="ghost-btn" data-action="energy">🔋 Geef Energie! (<span id="votesEnergy">0</span>)</button>
+                        <button id="voteRest" class="ghost-btn" data-action="rest">😴 Laat Rusten! (<span id="votesRest">0</span>)</button>
+                    </div>
+                    <p id="voteMessage" style="color:var(--muted); font-size: 0.9em; margin-top: 10px;">
+                        Stem op de volgende actie. Je hebt nog niet gestemd in deze ronde.
+                    </p>
                 </section>
 
                 <section class="card survival">
@@ -67,18 +81,18 @@
 
                     <div class="progress-wrap jumbo">
                         <div class="progress-bar" id="progressBar"><div id="progressFill"></div></div>
-                        <div class="progress-label" id="progressLabel">0%</div>
+                        <div class="progress-label" id="progressLabel">50%</div>
                     </div>
 
                     <div class="surv-meta">
                         <p>
-                            Status: <strong id="survStatus">—</strong>
+                            Status: <strong id="survStatus">Tracking Market</strong>
                             <span class="sep">|</span>
                             Streak: <strong id="streak">0</strong>
                             <span class="sep">|</span>
-                            Next Check: <strong id="countdown">--:--</strong>
+                            Next Check: <strong id="countdown">00:00</strong>
                         </p>
-                        <p>Hype Value: <strong id="hypeValue">0</strong>%</p>
+                        <p>Hype Value: <strong id="hypeValue">50</strong>%</p>
                         <p class="sub next">
                             Next Goal on ✅: <strong id="nextPass">◎0.000</strong>
                             <span class="sep">|</span>
@@ -86,23 +100,18 @@
                         </p>
                         <div id="streakBadge" class="streak-badge" hidden>🔥 Streak 1 — We are alive!</div>
                     </div>
-                    <small>Running in Demo mode without DEX-pair (for testing).</small>
+                    <small>Survival data gesimuleerd voor demo. Echt volume komt later.</small>
                 </section>
                 
                 <section class="card hype">
                     <h2>🚀 Hype Meter</h2>
-                    <div class="hype-bar"><div id="hype-fill"></div></div>
+                    <div class="hype-bar"><div id="hype-fill" style="width: 50%;"></div></div>
                 </section>
 
                 <section class="card cta">
                     <div class="cta-row">
-                        <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost</a>
-                        <button id="copyLink" class="ghost-btn">Copy Link</button>
-                        <button id="toggleQR" class="ghost-btn">Show QR</button>
-                    </div>
-                    <div id="qrBox" class="qr" hidden>
-                        <img id="qrImg" alt="QR code for trade link">
-                    </div>
+                        <a id="ctaBtn" class="cta-btn" href="#" target="_blank" rel="noopener">🟧 Feed the Ghost (SOL Flow)</a>
+                        </div>
                 </section>
 
                 <div id="callout" class="card callout" hidden>
@@ -114,13 +123,16 @@
             <aside class="col-side">
                 <section class="card log">
                     <div class="log-header"><h2>📒 Log</h2></div>
-                    <ul id="logList"></ul>
+                    <ul id="logList">
+                        <li>[SYSTEM] Ghostagotchi online. Start survival protocol.</li>
+                    </ul>
                 </section>
                 <footer><small>Entertainment project; no financial promises. © Ghostagotchi</small></footer>
             </aside>
             
         </div>
-        </div>
+    </div>
+    
     <div id="confettiLayer"></div>
     <div id="toast" class="toast" aria-live="polite"></div>
     <div id="chatBubble" class="bubble" hidden></div>
@@ -129,12 +141,26 @@
         <h2>📖 Ghostagotchi Lore</h2>
         <p>
             Born from the blockchain shadows, Ghostagotchi drifts through
-            wallets and memes. Support, hype and love keep it alive.<br/><br/>
-            Replace this with your whitepaper or community lore.
+            wallets and memes. Support, hype and love keep it alive.
         </p>
         <button id="btn-lore-close" class="ghost-btn">Close</button>
     </div>
 
+    <div id="debugPanel" style="position:fixed; bottom:0; right:0; background:rgba(0,0,0,0.9); color:#fff; padding:10px; z-index:9999; font-size:12px; display:none;">
+        <strong>STREAMER CONTROLS</strong><br>
+        <button onclick="simulateSurvivalPass()" style="background:#0a0; color:#fff; border:none; margin:2px;">✅ Survival Pass</button>
+        <button onclick="simulateSurvivalFail()" style="background:#a00; color:#fff; border:none; margin:2px;">❌ Survival Fail</button><br>
+        <button onclick="setStats(100)" style="background:#00a; color:#fff; border:none; margin:2px;">Max Stats</button>
+        <button onclick="setStats(10)" style="background:#a0a; color:#fff; border:none; margin:2px;">Min Stats</button>
+    </div>
+
+    <script>
+        // Voeg deze regel toe om het paneel te tonen tijdens de stream/ontwikkeling
+        // Je kunt een geheime toetsencombinatie gebruiken, maar voor nu, toon hem direct.
+        document.addEventListener('DOMContentLoaded', () => {
+             document.getElementById('debugPanel').style.display = 'block';
+        });
+    </script>
     <script src="client.js"></script>
 </body>
 </html>
